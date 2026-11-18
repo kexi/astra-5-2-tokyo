@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+.pnpm-store/
+assets/*.new
+dist/
+node_modules/
+assets/city.bin
+review/round-*/
+review/astra-check/
+review/current/
+review/viewer.jpg

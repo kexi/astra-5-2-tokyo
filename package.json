@@ -1,0 +1,17 @@
+{
+  "name": "astra-5-2-tokyo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "^24.11.0"
+  },
+  "scripts": {
+    "preinstall": "npx --offline only-allow pnpm",
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "only-allow": "1.2.2",
+    "tsdown": "0.23.7"
+  }
+}

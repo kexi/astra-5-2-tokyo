@@ -1,0 +1,2 @@
+# Preserve the exact formatting of the vendored upstream distributions.
+vendor/** -whitespace

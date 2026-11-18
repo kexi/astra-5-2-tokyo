@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  commands:
+    just-format:
+      glob: "Justfile"
+      run: just --fmt --check
+    actions:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: actionlint && pinact run --check --fix=false --no-api
+    secrets:
+      run: gitleaks git --staged --redact --no-banner
