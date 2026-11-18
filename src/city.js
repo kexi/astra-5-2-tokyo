@@ -57,12 +57,6 @@ function pixels(image, maxSize) {
   return { width, height, data };
 }
 
-function bitmapOffset(bitmap, u, v) {
-  const x = T.MathUtils.clamp(Math.floor(u * bitmap.width), 0, bitmap.width - 1);
-  const y = T.MathUtils.clamp(Math.floor(v * bitmap.height), 0, bitmap.height - 1);
-  return (y * bitmap.width + x) * 4;
-}
-
 function mapper(frame, { zoom, bounds: [left, top, right, bottom] }) {
   const grid = 2 ** zoom;
   return (x, z) => {
@@ -72,32 +66,103 @@ function mapper(frame, { zoom, bounds: [left, top, right, bottom] }) {
   };
 }
 
-function groundModel(manifest, frame, photo, dem) {
+function elevationSampler(frame, layer, image) {
+  const map = mapper(frame, layer);
+  const bitmap = pixels(image, Infinity);
+  const { width, height, data } = bitmap;
+  function heightAt(x, y) {
+    const index = (y * width + x) * 4;
+    const raw = (data[index] << 16) + (data[index + 1] << 8) + data[index + 2];
+    return raw === 0x800000 || !data[index + 3] ? null : (raw >= 0x800000 ? raw - 0x1000000 : raw) * .01;
+  }
+  return (x, z) => {
+    const [u, v] = map(x, z);
+    const edge = Math.min(u, v, 1 - u, 1 - v);
+    if (edge < 0) return null;
+    const px = T.MathUtils.clamp(u * width - .5, 0, width - 1);
+    const py = T.MathUtils.clamp(v * height - .5, 0, height - 1);
+    const i = Math.floor(px), j = Math.floor(py);
+    const ni = Math.min(i + 1, width - 1), nj = Math.min(j + 1, height - 1);
+    const fx = px - i, fy = py - j;
+    const weighted = [
+      [heightAt(i, j), (1 - fx) * (1 - fy)], [heightAt(ni, j), fx * (1 - fy)],
+      [heightAt(i, nj), (1 - fx) * fy], [heightAt(ni, nj), fx * fy],
+    ];
+    let value = 0, total = 0;
+    for (const [height, weight] of weighted) {
+      if (height === null) continue;
+      value += height * weight;
+      total += weight;
+    }
+    if (!total) return null;
+    return { value: value / total, opacity: T.MathUtils.smoothstep(edge, 0, .028) * total };
+  };
+}
+
+function sampleGrid(from, to, fineFrom, fineTo) {
+  const axis = [];
+  for (let point = from; point < to;) {
+    axis.push(point);
+    const step = point >= fineFrom && point < fineTo ? 2.5 : 16;
+    const boundary = point < fineFrom ? fineFrom : point < fineTo ? fineTo : to;
+    point = Math.min(point + step, boundary);
+  }
+  axis.push(to);
+  return axis;
+}
+
+function lowerIndex(axis, value) {
+  let left = 0, right = axis.length - 1;
+  while (left < right) {
+    const middle = (left + right) >> 1;
+    if (axis[middle] < value) left = middle + 1;
+    else right = middle;
+  }
+  return left;
+}
+
+function projectedTexture(frame, layer) {
+  const map = mapper(frame, layer);
+  const [u0, v0] = map(0, 0);
+  const [u1, v1] = map(1000, 1000);
+  return new T.Vector4((u1-u0)/1000, (v0-v1)/1000, u0, 1-v0);
+}
+
+async function groundModel(manifest, frame, photo, elevations, overlays, geoid) {
   const uv = mapper(frame, manifest.photo);
-  const elevationUV = mapper(frame, manifest.elevation);
-  const elevations = pixels(dem.image, Infinity);
+  const samplers = elevations.map(({ layer, texture }) => elevationSampler(frame, layer, texture.image));
   const groundHeight = (x, z) => {
-    const [u, v] = elevationUV(x, z);
-    const index = bitmapOffset(elevations, u, v);
-    const row = elevations.data;
-    const raw = (row[index] << 16) + (row[index + 1] << 8) + row[index + 2];
-    const value = raw === 0x800000 ? 1.5 : (raw >= 0x800000 ? raw - 0x1000000 : raw) * .01;
-    const bulge = (x * x + z * z) / (2 * 6371000);
-    return value + 36.6 - manifest.origin[2] - bulge - .78;
+    let value = 1.5;
+    for (let i = samplers.length - 1; i >= 0; i--) {
+      const sample = samplers[i](x, z);
+      if (!sample) continue;
+      const amount = i === samplers.length - 1 ? 1 : sample.opacity;
+      value = T.MathUtils.lerp(value, sample.value, amount);
+    }
+    const bulge = (x*x + z*z) / (2 * 6371000);
+    return value + geoid - manifest.origin[2] - bulge - .78;
   };
 
   const ground = new T.Group();
   const extent = 2770;
-  const land = new T.PlaneGeometry(2 * extent, 2 * extent, 370, 370).rotateX(-Math.PI / 2);
+  const xs = sampleGrid(-extent, extent, -910, 610);
+  const zs = sampleGrid(-extent, extent, -550, 540);
+  const columns = xs.length, rows = zs.length;
+  const land = new T.PlaneGeometry(2*extent, 2*extent, columns - 1, rows - 1).rotateX(-Math.PI / 2);
   const { position, uv: coords } = land.attributes;
-  for (let i = 0; i < position.count; i++) {
-    const x = position.getX(i), z = position.getZ(i);
-    const [u, v] = uv(x, z);
-    position.setY(i, groundHeight(x, z));
-    coords.setXY(i, u, 1 - v);
+  for (let row = 0; row < rows; row++) {
+    if (row && row % 24 === 0) {
+      await (globalThis.scheduler?.yield?.() ?? new Promise(resolve => setTimeout(resolve, 0)));
+    }
+    for (let col = 0; col < columns; col++) {
+      const index = row * columns + col;
+      const x = xs[col], z = zs[row];
+      const [u, v] = uv(x, z);
+      position.setXYZ(index, x, groundHeight(x, z), z);
+      coords.setXY(index, u, 1 - v);
+    }
   }
-  land.computeVertexNormals();
-  const mesh = new T.Mesh(land, surfaceMaterial('ground', photo));
+  const mesh = new T.Mesh(land, surfaceMaterial('ground', photo, null, overlays));
   mesh.receiveShadow = true;
   ground.add(mesh);
 
@@ -107,8 +172,6 @@ function groundModel(manifest, frame, photo, dem) {
     const vertices = object.geometry.attributes.position;
     const indices = object.geometry.index;
     const count = indices?.count ?? vertices.count;
-    const { widthSegments, heightSegments } = land.parameters;
-    const cell = 2 * extent / widthSegments;
     const a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3();
     const point = (target, i) => target.fromBufferAttribute(vertices, indices ? indices.getX(i) : i)
       .applyMatrix4(object.matrixWorld);
@@ -118,66 +181,100 @@ function groundModel(manifest, frame, photo, dem) {
       point(c, i + 2);
       const denominator = (b.z-c.z)*(a.x-c.x) + (c.x-b.x)*(a.z-c.z);
       if (Math.abs(denominator) < .001) continue;
-      const minCol = Math.max(0, Math.floor((Math.min(a.x,b.x,c.x) + extent) / cell));
-      const maxCol = Math.min(widthSegments, Math.ceil((Math.max(a.x,b.x,c.x) + extent) / cell));
-      const minRow = Math.max(0, Math.floor((Math.min(a.z,b.z,c.z) + extent) / cell));
-      const maxRow = Math.min(heightSegments, Math.ceil((Math.max(a.z,b.z,c.z) + extent) / cell));
-      const padA = .8 * cell * (Math.abs(b.z-c.z)+Math.abs(c.x-b.x)) / Math.abs(denominator);
-      const padB = .8 * cell * (Math.abs(c.z-a.z)+Math.abs(a.x-c.x)) / Math.abs(denominator);
-      const padC = .8 * cell * (Math.abs(a.z-b.z)+Math.abs(b.x-a.x)) / Math.abs(denominator);
+      const minCol = Math.max(0, lowerIndex(xs, Math.min(a.x,b.x,c.x)) - 1);
+      const maxCol = lowerIndex(xs, Math.max(a.x,b.x,c.x));
+      const minRow = Math.max(0, lowerIndex(zs, Math.min(a.z,b.z,c.z)) - 1);
+      const maxRow = lowerIndex(zs, Math.max(a.z,b.z,c.z));
+      const inverse = 1 / Math.abs(denominator);
+      const edgeA = (Math.abs(b.z-c.z)+Math.abs(c.x-b.x)) * inverse;
+      const edgeB = (Math.abs(c.z-a.z)+Math.abs(a.x-c.x)) * inverse;
+      const edgeC = (Math.abs(a.z-b.z)+Math.abs(b.x-a.x)) * inverse;
       const bed = Math.min(a.y, b.y, c.y) - .75;
       for (let row = minRow; row <= maxRow; row++) {
         for (let col = minCol; col <= maxCol; col++) {
-          const x = col * cell - extent - c.x, z = row * cell - extent - c.z;
+          const x = xs[col] - c.x, z = zs[row] - c.z;
+          const pad = .72 * Math.max(xs[col] - xs[Math.max(0,col-1)], zs[row] - zs[Math.max(0,row-1)]);
           const u = ((b.z-c.z)*x + (c.x-b.x)*z) / denominator;
           const v = ((c.z-a.z)*x + (a.x-c.x)*z) / denominator;
-          if (u < -padA || v < -padB || 1-u-v < -padC) continue;
-          const index = row * (widthSegments + 1) + col;
+          if (u < -pad*edgeA || v < -pad*edgeB || 1-u-v < -pad*edgeC) continue;
+          const index = row * columns + col;
           position.setY(index, Math.min(position.getY(index), bed));
         }
       }
     }
   }
-  return { ground, groundHeight, uv, carveWaterbed, land };
+  return { ground, groundHeight, carveWaterbed, land };
 }
 
-function parkSites(groundHeight) {
+function parkSites(groundHeight, heights, surveyedTrees) {
   const tree = new T.Object3D();
-  return treeLayout.map(([x, north, scale, angle], index) => {
+  return treeLayout.flatMap(([x, north, scale, angle], index) => {
+    const overlaps = surveyedTrees.some(([east, y, radius]) => Math.hypot(east - x, y - north) < Math.max(2.1, radius*.8));
+    if (overlaps) return [];
+    const species = index % 2;
+    const modelHeight = species === 0 ? 9.4745 : 9.204;
+    const measured = heights[index];
+    const treeHeight = Number.isFinite(measured) ? measured : modelHeight * scale;
     tree.position.set(x, groundHeight(x, -north), -north);
-    tree.scale.setScalar(scale);
+    tree.scale.set(scale, treeHeight / modelHeight, scale);
     tree.rotation.y = angle;
     tree.updateMatrix();
     const tone = .84 + .16 * (.5 + .5 * Math.sin(index * 2.39996));
     const color = new T.Color(.94*tone, tone, .86*tone);
     const center = tree.position.clone();
-    center.y += 4.7*scale;
-    return { matrix: tree.matrix.clone(), color, species: index%2, center, radius: 8.8*scale };
+    center.y += treeHeight * .52;
+    return [{ matrix: tree.matrix.clone(), color, species, center, radius: Math.max(8.8*scale, treeHeight*.64) }];
   });
 }
 
 export async function loadCity(progress, anisotropy) {
-  const manifest = await fetchAsset('manifest.json', 'json');
+  const [manifest, survey, railway] = await Promise.all([
+    fetchAsset('manifest.json', 'json'),
+    fetchAsset('survey.json', 'json'),
+    fetchAsset('rail-reference.json', 'json'),
+  ]);
   const frame = localFrame(manifest.origin);
   const textureLoader = new T.TextureLoader();
-  const [archives, photo, dem] = await Promise.all([
+  async function loadLayer(layer) {
+    return { layer, texture: await textureLoader.loadAsync('assets/' + layer.file) };
+  }
+  const [archives, basePhoto, photoLayers, elevations, treeHeights] = await Promise.all([
     Promise.all(manifest.archives.map(cityArchive)),
-    textureLoader.loadAsync('assets/' + manifest.photo.file),
-    textureLoader.loadAsync('assets/' + manifest.elevation.file),
+    loadLayer(manifest.photo),
+    Promise.all(survey.photos.map(loadLayer)),
+    Promise.all([...survey.elevations, manifest.elevation].map(loadLayer)),
+    fetchAsset(survey.trees.file, 'json'),
   ]);
-  photo.colorSpace = T.SRGBColorSpace;
-  photo.anisotropy = Math.min(12, anisotropy);
-  const { ground, groundHeight, uv, carveWaterbed, land } = groundModel(manifest, frame, photo, dem);
+  for (const { texture } of [basePhoto, ...photoLayers]) {
+    texture.colorSpace = T.SRGBColorSpace;
+    texture.anisotropy = Math.min(12, anisotropy);
+  }
+  const overlays = photoLayers.map(({ layer, texture }) => ({ texture, transform: projectedTexture(frame, layer) }));
+  const photo = basePhoto.texture;
+  const geoid = railway.verticalDatum.geoidHeight;
+  const { ground, groundHeight, carveWaterbed, land } = await groundModel(manifest, frame, photo, elevations, overlays, geoid);
   const draco = new DRACOLoader().setDecoderPath(DRACO_GLTF_CONFIG).setWorkerLimit(6);
   const loader = new GLTFLoader().setDRACOLoader(draco);
-  const park = loadParkTrees(ground, parkSites(groundHeight), loader);
+  const park = loadParkTrees(ground, parkSites(groundHeight, treeHeights.heights, manifest.surveyedTrees ?? []), loader);
   const root = new T.Group();
   const buildings = new T.Group();
   root.add(ground, buildings);
+  const rail = loader.loadAsync('assets/rail-model.glb').then(gltf => {
+    gltf.scene.traverse(object => {
+      if (!object.isMesh) return;
+      const original = object.material;
+      const material = surfaceMaterial('furniture');
+      material.color.copy(original.color);
+      material.roughness = original.roughness;
+      material.metalness = original.metalness;
+      object.material = material;
+      object.receiveShadow = true;
+    });
+    root.add(gltf.scene);
+    return gltf.parser.json.extras.trackIds.length;
+  });
   const water = waterMaterial();
-  const [u0, v0] = uv(0, 0);
-  const [u1, v1] = uv(1000, 1000);
-  const roads = surfaceMaterial('road', photo, new T.Vector4((u1-u0)/1000, (v0-v1)/1000, u0, 1-v0));
+  const roads = surfaceMaterial('road', photo, projectedTexture(frame, manifest.photo), overlays);
   const grass = surfaceMaterial('grass');
   const clay = surfaceMaterial('building');
   const leafMesh = surfaceMaterial('leaf');
@@ -199,7 +296,7 @@ export async function loadCity(progress, anisotropy) {
         group.traverse(object => {
           if (!object.isMesh) return;
           triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3;
-          object.castShadow = isBuilding || tile.kind === 'tree';
+          object.castShadow = ['building', 'tree', 'bridge', 'furniture'].includes(tile.kind);
           object.receiveShadow = tile.kind !== 'water';
           if (isBuilding) {
             object.layers.enable(1);
@@ -218,7 +315,24 @@ export async function loadCity(progress, anisotropy) {
               object.material = clay;
             }
           } else {
-            object.material = { road: roads, grass, water, tree: leafMesh }[tile.kind];
+            const conventional = { road: roads, grass, water, tree: leafMesh }[tile.kind];
+            const original = object.material;
+            const isInfrastructure = tile.kind === 'bridge' || tile.kind === 'furniture';
+            if (isInfrastructure || (tile.kind !== 'road' && tile.kind !== 'water' && (original.map || original.vertexColors))) {
+              const kind = isInfrastructure ? tile.kind : tile.kind === 'grass' ? 'grass' : 'leaf';
+              const material = surfaceMaterial(kind, original.map);
+              if (original.map) {
+                material.color.set('#f3efe5');
+                original.map.anisotropy = Math.min(anisotropy, 8);
+                mapped = true;
+              } else if (original.vertexColors || original.color?.getHex() !== 0xffffff) {
+                material.color.copy(original.color);
+              }
+              material.vertexColors = original.vertexColors;
+              object.material = material;
+            } else {
+              object.material = conventional;
+            }
             if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
           }
         });
@@ -233,7 +347,7 @@ export async function loadCity(progress, anisotropy) {
       if (++done % 24 === 0 || done === manifest.tiles.length) progress(done, manifest.tiles.length);
     }
   }
-  const [trees] = await Promise.all([park, ...Array.from({ length: 12 }, worker)]);
+  const [trees, tracks] = await Promise.all([park, rail, ...Array.from({ length: 12 }, worker)]);
   draco.dispose();
   if (failures.length) throw new Error(`${failures.length}件の都市タイルを読み込めませんでした`);
   root.updateMatrixWorld(true);
@@ -242,5 +356,5 @@ export async function loadCity(progress, anisotropy) {
   });
   land.attributes.position.needsUpdate = true;
   land.computeVertexNormals();
-  return { root, buildings, water, trees, counts: { tiles: done, textured, triangles, trees: trees.count } };
+  return { root, buildings, water, trees, counts: { tiles: done, textured, triangles, trees: trees.count, surveyedTrees: manifest.surveyedTrees.length, tracks } };
 }

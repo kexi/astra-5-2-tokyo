@@ -188,11 +188,11 @@ function addWindowReflections(shader) {
   `);
 }
 
-export function surfaceMaterial(kind, texture, projectMap) {
+export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
   const hasWindowPhoto = kind === 'building' && Boolean(texture);
   const material = new T.MeshStandardMaterial({
     map: texture ?? null,
-    color: { ground: '#e9e4db', road: '#e3dfd9', grass: '#6b7740', building: '#cfc6b6', leaf: '#70864c', trunk: '#655647' }[kind],
+    color: { ground: '#e9e4db', road: '#e3dfd9', grass: '#6b7740', bridge: '#a3a297', furniture: '#848f91', building: '#cfc6b6', leaf: '#70864c', trunk: '#655647' }[kind],
     roughness: kind === 'building' ? .78 : .95,
     side: T.DoubleSide,
   });
@@ -212,6 +212,38 @@ export function surfaceMaterial(kind, texture, projectMap) {
       shader.vertexShader = 'uniform vec4 projectMap;\n' + shader.vertexShader.replace(
         'terrainPoint = (modelMatrix * terrainVertex).xyz;',
         'terrainPoint = (modelMatrix * terrainVertex).xyz; vMapUv = terrainPoint.xz * projectMap.xy + projectMap.zw;',
+      );
+    }
+    if (overlays.length) {
+      const declarations = [];
+      const blending = [];
+      for (let i = overlays.length - 1; i >= 0; i--) {
+        const { texture, transform } = overlays[i];
+        shader.uniforms['detailPhoto' + i] = { value: texture };
+        shader.uniforms['detailProjection' + i] = { value: transform };
+        declarations.push(`uniform sampler2D detailPhoto${i}; uniform vec4 detailProjection${i};`);
+        blending.push(`
+          vec2 patchUV${i} = terrainPoint.xz * detailProjection${i}.xy + detailProjection${i}.zw;
+          vec2 edge${i} = min(patchUV${i}, 1. - patchUV${i});
+          vec4 detail${i} = texture2D(detailPhoto${i}, patchUV${i});
+          float blend${i} = smoothstep(0., .035, min(edge${i}.x, edge${i}.y)) * detail${i}.a;
+          surveyedPhoto = mix(surveyedPhoto, detail${i}.rgb, blend${i});
+        `);
+      }
+      shader.fragmentShader = declarations.join('\n') + '\n' + shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `vec3 surveyedPhoto = texture2D(map, vMapUv).rgb;${blending.join('\n')} diffuseColor.rgb *= surveyedPhoto;`,
+      );
+    }
+    if (kind === 'ground') {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <normal_fragment_maps>',
+        `#include <normal_fragment_maps>
+         vec3 slopeNormal = normalize(cross(dFdx(terrainPoint), dFdy(terrainPoint)));
+         float exposedSlope = smoothstep(.33, .76, 1. - abs(slopeNormal.y));
+         vec3 bank = vec3(.135,.125,.098) * (.92+.2*surfaceDetail(terrainPoint*1.6));
+         diffuseColor.rgb = mix(diffuseColor.rgb, bank, .90*exposedSlope);
+        `,
       );
     }
     shader.fragmentShader = `${atmosphere}
@@ -247,13 +279,16 @@ export function surfaceMaterial(kind, texture, projectMap) {
         diffuseColor.rgb *= .83+.24*surfaceDetail(terrainPoint*.053)+.045*surfaceDetail(terrainPoint*1.7);`,
       leaf: `#include <color_fragment>
         diffuseColor.rgb *= .73+.49*surfaceDetail(terrainPoint*1.2);`,
+      bridge: `#include <color_fragment>
+        diffuseColor.rgb *= .91 + .15 * surfaceDetail(terrainPoint * .32);`,
+      furniture: '#include <color_fragment>',
       trunk: '#include <color_fragment>',
     }[kind]).replace('#include <tonemapping_fragment>', `
         gl_FragColor.rgb = aerialPerspective(gl_FragColor.rgb, terrainPoint, vViewPosition.z);
         #include <tonemapping_fragment>`);
     if (hasWindowPhoto) addWindowReflections(shader);
   };
-  material.customProgramCacheKey = () => hasWindowPhoto ? 'building-photo' : kind;
+  material.customProgramCacheKey = () => hasWindowPhoto ? 'building-photo' : `${kind}-${overlays.length}`;
   return material;
 }
 

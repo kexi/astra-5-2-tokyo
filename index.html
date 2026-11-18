@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>東京駅上空 — PLATEAU / Three.js</title>
   <link rel="stylesheet" href="src/style.css">
+  <link rel="preload" as="image" href="output/tokyo-station.jpg" fetchpriority="high">
   <script type="importmap">
     {"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/addons/"}}
   </script>
@@ -24,21 +25,21 @@
         <div><span id="bearing">—</span><span id="height">— m</span></div>
       </aside>
       <div id="film-title" aria-hidden="true"><p>MARUNOUCHI · TOKYO</p><strong>東京駅上空</strong></div>
-      <div id="film-credit" aria-hidden="true">国土交通省 PLATEAU 2025・地理院タイルを加工して作成</div>
+      <div id="film-credit" aria-hidden="true">PLATEAU 2025・地理院タイル・東京都デジタルツイン・国土数値情報を加工<br>© OpenStreetMap contributors（openstreetmap.org/copyright）</div>
       <div class="film-shade" aria-hidden="true"></div>
       <footer class="flight-panel">
         <div class="transport">
           <button id="play" type="button" disabled>空撮を再生</button>
           <div class="timeline">
-            <div class="track-info"><span id="shot">丸の内へ</span><output id="time" for="seek">0:00 / 0:31</output></div>
-            <input id="seek" type="range" min="0" max="31.5" value="0" step=".01" aria-label="空撮の再生位置" disabled>
+            <div class="track-info"><span id="shot">丸の内へ</span><output id="time" for="seek">0:00 / 0:39</output></div>
+            <input id="seek" type="range" min="0" max="39.5" value="0" step=".01" aria-label="空撮の再生位置" disabled>
           </div>
           <button id="orbit" type="button" aria-pressed="false" disabled>360° 見回す</button>
           <button id="flare" type="button" aria-pressed="true" disabled>フレア</button>
         </div>
         <div class="footnote">
           <p><a class="film-link" href="output/tokyo-station.mp4">空撮動画を見る（MP4）</a><span id="hint">東京駅・丸の内・八重洲</span></p>
-          <p><a href="https://www.mlit.go.jp/plateau/">国土交通省 PLATEAU 2025</a><span> / </span><a href="https://maps.gsi.go.jp/help/use.html">地理院タイル</a>を加工して作成</p>
+          <p><a href="https://www.mlit.go.jp/plateau/">国土交通省 PLATEAU 2025</a><span> / </span><a href="https://maps.gsi.go.jp/help/use.html">地理院タイル</a>・<a href="https://www.metro.tokyo.lg.jp/information/press/2024/10/2024103126">東京都デジタルツイン</a>を加工<br><a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>
         </div>
       </footer>
     </section>

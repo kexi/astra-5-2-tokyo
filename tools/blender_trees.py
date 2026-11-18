@@ -493,7 +493,8 @@ def place_trees(
     centers = list(detail_centers)
     for i, row in enumerate(placements):
         x, y, z = row[:3]
-        rng = Random(35927 + i)
+        source_index = row[6] if len(row) > 6 else i
+        rng = Random(35927 + source_index)
         scale = row[3] if len(row) > 3 else rng.uniform(0.79, 1.18)
         angle = row[4] if len(row) > 4 else rng.uniform(0, tau)
         distance2 = min(
@@ -506,14 +507,17 @@ def place_trees(
             if distance2 <= mid_distance**2
             else "far"
         )
-        species = SPECIES[i % 2]
+        species = SPECIES[source_index % 2]
         tree = bpy.data.objects.new(f"{species} | {i:04}", None)
         tree.instance_type = "COLLECTION"
         tree.instance_collection = assets[species][level]
         tree.empty_display_size = 0.18
         tree.location = (x, y, z)
         tree.rotation_euler.z = angle
-        tree.scale = (scale,) * 3
+        height = row[5] if len(row) > 5 else None
+        original_height = 9.4745 if species == "Zelkova" else 9.204
+        vertical = scale if height is None else height / original_height
+        tree.scale = (scale, scale, vertical)
         container.objects.link(tree)
     return container
 

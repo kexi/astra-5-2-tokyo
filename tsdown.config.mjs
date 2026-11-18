@@ -25,7 +25,10 @@ export default defineConfig({
       const manifest = JSON.parse(await readFile('assets/manifest.json', 'utf8'));
       const models = ['near', 'mid', 'far', 'horizon'].map(level => `park-trees-${level}.glb`);
       const foliage = ['park-foliage-zelkova.png', 'park-foliage-camphor.png'];
-      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage];
+      const survey = JSON.parse(await readFile('assets/survey.json', 'utf8'));
+      const surveyFiles = [...survey.photos, ...survey.elevations, ...(survey.surfaces ?? []), survey.trees].map(layer => layer.file);
+      const railway = ['rail-model.glb', 'rail-reference.json', 'rail-tracks.json', 'survey-rail.json', 'RAIL-SOURCES.md'];
+      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage, 'survey.json', ...surveyFiles, ...railway];
       await Promise.all([
         writeFile('dist/index.html', html.replace(importMap[0], '')),
         cp('src/style.css', 'dist/src/style.css'),

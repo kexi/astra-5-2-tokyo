@@ -21,13 +21,14 @@ ASSETS = ROOT / "assets"
 sys.path.insert(0, str(HERE))
 SUN = Vector((-0.84, 0.49, 0.22)).normalized()
 GROUND_EXTENT = 2770
-GRID = 300
 TILE_COLLECTIONS = {
     "building": "01  PLATEAU・建築物",
     "road": "02  PLATEAU・道路",
     "water": "03  PLATEAU・水域",
     "grass": "04  PLATEAU・植生",
     "tree": "05  PLATEAU・樹木",
+    "bridge": "06  PLATEAU・橋梁",
+    "furniture": "06  PLATEAU・都市設備",
 }
 
 
@@ -74,13 +75,15 @@ def noise_bump(tree, surface, scale, strength, distance, label):
     return noise
 
 
-def terrain_material(name, photo, is_road=False):
+def terrain_material(name, photo, is_road=False, overlays=()):
     material, graph, surface = new_surface(name, (0.20, 0.22, 0.15), 0.91)
     tex = graph.nodes.new("ShaderNodeTexImage")
     tex.image = photo
     tex.label = "国土地理院・航空写真"
     tex.extension = "EXTEND"
-    connect(graph, tex, "Color", surface, "Base Color")
+    from blender_survey import project_photos
+
+    project_photos(graph, tex, surface, overlays, shade_banks=not is_road)
     noise_bump(
         graph,
         surface,
@@ -181,50 +184,24 @@ def geo(manifest):
     return tile_matrix, uv_project
 
 
-def dem_sample(manifest, uv_project):
-    dem = loaded_image(manifest["elevation"]["file"])
-    dem.colorspace_settings.name = "Non-Color"
-    pixels = np.round(array_image(dem)[..., :3] * 255).astype(np.int32)
-    raw = (pixels[..., 0] << 16) | (pixels[..., 1] << 8) | pixels[..., 2]
-    height = np.where(
-        raw == 0x800000, 1.5, np.where(raw >= 0x800000, raw - 0x1000000, raw) * 0.01
-    )
-    rows, cols = height.shape
+def mesh_from_ground(group, photo, manifest, project, height, waters, overlays):
+    from blender_survey import sample_axis
 
-    def sample(x, y):
-        u, v = uv_project(x, y, manifest["elevation"])
-        xi = np.clip(np.asarray(u * cols, dtype=int), 0, cols - 1)
-        yi = np.clip(np.asarray(v * rows, dtype=int), 0, rows - 1)
-        return (
-            height[yi, xi]
-            + 36.6
-            - manifest["origin"][2]
-            - (x * x + y * y) / (2 * 6371000)
-            - 0.78
-        )
-
-    return sample
-
-
-def tree_placements(height):
-    layout = json.loads((HERE / "tree-layout.json").read_text())
-    return [(x, y, float(height(x, y)), scale, angle) for x, y, scale, angle in layout]
-
-
-def mesh_from_ground(group, photo, manifest, project, height, waters):
-    span = np.linspace(-GROUND_EXTENT, GROUND_EXTENT, GRID + 1)
-    gx, gy = np.meshgrid(span, span)
+    xs = sample_axis(GROUND_EXTENT, -910, 610)
+    ys = sample_axis(GROUND_EXTENT, -540, 550)
+    gx, gy = np.meshgrid(xs, ys)
     gz = height(gx, gy)
-    pitch = span[1] - span[0]
+    dx = np.diff(xs, prepend=xs[0])
+    dy = np.diff(ys, prepend=ys[0])
     for obj in waters:
         obj.data.calc_loop_triangles()
         transformed = [obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
         for tri in obj.data.loop_triangles:
             a, b, c = (transformed[i] for i in tri.vertices)
-            left = max(0, int((min(a.x, b.x, c.x) + GROUND_EXTENT) / pitch) - 1)
-            right = min(GRID, int((max(a.x, b.x, c.x) + GROUND_EXTENT) / pitch) + 1)
-            bottom = max(0, int((min(a.y, b.y, c.y) + GROUND_EXTENT) / pitch) - 1)
-            top = min(GRID, int((max(a.y, b.y, c.y) + GROUND_EXTENT) / pitch) + 1)
+            left = max(0, np.searchsorted(xs, min(a.x, b.x, c.x)) - 1)
+            right = min(len(xs) - 1, np.searchsorted(xs, max(a.x, b.x, c.x)))
+            bottom = max(0, np.searchsorted(ys, min(a.y, b.y, c.y)) - 1)
+            top = min(len(ys) - 1, np.searchsorted(ys, max(a.y, b.y, c.y)))
             denom = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y)
             if abs(denom) < 0.01 or left > right or bottom > top:
                 continue
@@ -232,7 +209,11 @@ def mesh_from_ground(group, photo, manifest, project, height, waters):
             x, y = gx[region], gy[region]
             u = ((b.y - c.y) * (x - c.x) + (c.x - b.x) * (y - c.y)) / denom
             v = ((c.y - a.y) * (x - c.x) + (a.x - c.x) * (y - c.y)) / denom
-            width = pitch * 0.38 / abs(denom)
+            width = (
+                np.maximum(dx[None, left : right + 1], dy[bottom : top + 1, None])
+                * 0.56
+                / abs(denom)
+            )
             mask = (
                 (u >= -width * (b - c).length)
                 & (v >= -width * (a - c).length)
@@ -243,11 +224,11 @@ def mesh_from_ground(group, photo, manifest, project, height, waters):
             )
 
     vertices = np.stack((gx, gy, gz), axis=-1).reshape(-1, 3)
-    step = GRID + 1
+    step = len(xs)
     faces = [
         (a, a + 1, a + step + 1, a + step)
-        for y in range(GRID)
-        for x in range(GRID)
+        for y in range(len(ys) - 1)
+        for x in range(len(xs) - 1)
         if (a := y * step + x) >= 0
     ]
     mesh = bpy.data.meshes.new("標高タイル・地形グリッド")
@@ -255,7 +236,7 @@ def mesh_from_ground(group, photo, manifest, project, height, waters):
     mesh.update()
     obj = bpy.data.objects.new("航空写真と標高モデル", mesh)
     group.objects.link(obj)
-    mesh.materials.append(terrain_material("地面・航空写真", photo))
+    mesh.materials.append(terrain_material("地面・航空写真", photo, overlays=overlays))
     set_projected_uv(obj, manifest, project)
     for face in mesh.polygons:
         face.use_smooth = True
@@ -277,9 +258,9 @@ def set_projected_uv(obj, manifest, project):
     layer.uv.foreach_set("vector", uv[ids].astype(np.float32).ravel())
 
 
-def import_city(manifest, tile_matrix, photo, project, subset):
+def import_city(manifest, tile_matrix, photo, project, subset, overlays):
     groups = {kind: collection(name) for kind, name in TILE_COLLECTIONS.items()}
-    road = terrain_material("道路・写真と舗装", photo, True)
+    road = terrain_material("道路・写真と舗装", photo, True, overlays)
     grass, graph, surface = new_surface("草地・緑被", (0.13, 0.19, 0.057), 0.92)
     noise_bump(graph, surface, 170, 0.51, 0.14, "草葉の起伏")
     water = water_material()
@@ -329,8 +310,20 @@ def import_city(manifest, tile_matrix, photo, project, subset):
                     groups[kind].objects.link(obj)
                     if obj.type != "MESH":
                         continue
-                    if kind in overrides:
-                        slots = obj.data.materials
+                    slots = obj.data.materials
+                    has_original_photo = any(
+                        material
+                        and material.node_tree
+                        and any(
+                            node.type == "TEX_IMAGE"
+                            for node in material.node_tree.nodes
+                        )
+                        for material in slots
+                    )
+                    replace_material = kind in ("water", "road") or (
+                        kind in overrides and not has_original_photo
+                    )
+                    if replace_material:
                         slots.clear()
                         slots.append(overrides[kind])
                         for polygon in obj.data.polygons:
@@ -339,8 +332,8 @@ def import_city(manifest, tile_matrix, photo, project, subset):
                             set_projected_uv(obj, manifest, project)
                         if kind == "water":
                             waters.append(obj)
-                    else:
-                        for material in obj.data.materials:
+                    elif kind == "building":
+                        for material in slots:
                             if material is not None:
                                 enhance_building_material(material)
                 added += 1
@@ -560,26 +553,58 @@ def main():
     manifest = json.loads((ASSETS / "manifest.json").read_text())
     placement, project = geo(manifest)
     photo = loaded_image(manifest["photo"]["file"])
-    height = dem_sample(manifest, project)
-    waters = import_city(manifest, placement, photo, project, params.crop)
-    mesh_from_ground(
-        collection("00  地理院・地形"), photo, manifest, project, height, waters
+    from blender_survey import (
+        dem_sample,
+        import_rail_model,
+        reference_curves,
+        tree_placements,
+        world_photos,
     )
     from blender_trees import create_tree_assets, place_trees
 
+    survey = json.loads((ASSETS / "survey.json").read_text())
+    railway = json.loads((ASSETS / "rail-reference.json").read_text())
+    geoid = railway["verticalDatum"]["geoidHeight"]
+    height = dem_sample(
+        manifest, project, survey["elevations"], loaded_image, array_image, geoid
+    )
+    overlays = world_photos(survey["photos"], project, loaded_image)
+    waters = import_city(manifest, placement, photo, project, params.crop, overlays)
+    mesh_from_ground(
+        collection("00  地理院と東京都・地形"),
+        photo,
+        manifest,
+        project,
+        height,
+        waters,
+        overlays,
+    )
+    heights = json.loads((ASSETS / survey["trees"]["file"]).read_text())["heights"]
+    layout = json.loads((HERE / "tree-layout.json").read_text())
+    positions = tree_placements(
+        layout, height, heights, manifest.get("surveyedTrees", [])
+    )
     place_trees(
         create_tree_assets(),
-        tree_placements(height),
+        positions,
         detail_centers=((-542, -12), (-702, -15), (-560, 125)),
         near_distance=24,
         mid_distance=82,
     )
+    reference_curves(scene, railway, height)
+    import_rail_model(scene, ASSETS / "rail-model.glb")
     credits = bpy.data.texts.new("出典と座標")
     credits.write(
         "東京駅上空\nProject PLATEAU 2025年度 千代田区・中央区・港区を加工\n"
         "https://docs.plateauview.mlit.go.jp/datasets/3d-tiles/\n"
         "地理院タイル（航空写真・標高）を加工して作成\n"
         "https://maps.gsi.go.jp/help/use.html\n"
+        "東京都デジタルツイン実現プロジェクト・区部点群データ（CC BY 4.0）を加工\n"
+        "https://www.metro.tokyo.lg.jp/information/press/2024/10/2024103126\n"
+        "国土交通省・国土数値情報 鉄道（N02、2025年度、CC BY 4.0）を加工\n"
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2025.html\n"
+        "© OpenStreetMap contributors・軌道中心線を加工（ODbL）\n"
+        "https://www.openstreetmap.org/copyright\n"
         f"WGS84 原点（経度, 緯度, 楕円体高） {manifest['origin']}\n"
         "BlenderのXは東、Yは北、Zは高さ（メートル）\n"
     )

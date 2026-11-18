@@ -22,6 +22,16 @@ const shots = [
     targets: [[-41, 22, -35], [-49, 20, -28], [-38, 28, -43]],
   },
   {
+    name: '八重洲の街路設備', duration: 4, fov: 50,
+    positions: [[228, 10.4, 175], [226, 7.4, 171.5], [224, 5.7, 167]],
+    targets: [[214.5, 4.5, 153], [214.5, 5.1, 152], [214.5, 5.2, 151.5]],
+  },
+  {
+    name: '日本橋川の道路橋', duration: 4, fov: 55,
+    positions: [[668, 64, -365], [679, 52, -353], [691, 42, -344]],
+    targets: [[758, 4.3, -325], [758, 3.5, -319], [759, 3, -314]],
+  },
+  {
     name: '夕陽のスカイライン', duration: 7.5, fov: 56,
     positions: [[625, 230, 400], [511, 290, 499], [347, 382, 591]],
     targets: [[-356, 166, -297], [-457, 135, -313], [-506, 128, -314]],
@@ -64,6 +74,9 @@ export function reviewPose(camera, bearing, height, distance) {
 }
 
 const detailViews = {
+  rail: { position: [-28, 6.7, 312], target: [-16, 4.65, 268] },
+  bridge: { position: [679, 52, -353], target: [758, 3.5, -319] },
+  furniture: { position: [224, 5, 167], target: [214.5, 5.2, 151.5] },
   moat: { position: [-500, 35, 195], target: [-430, 2, -32] },
   leaves: { position: [-530, 7.2, 20], target: [-542, 8.9, 12.5] },
   trees: { position: [-560, 10.7, 27], target: [-543, 6.2, 12.5] },

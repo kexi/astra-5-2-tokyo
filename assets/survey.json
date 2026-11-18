@@ -1,0 +1,449 @@
+{
+  "version": 1,
+  "origin": [
+    139.7661,
+    35.68117,
+    40.0
+  ],
+  "photos": [
+    {
+      "file": "survey-tokyo-ortho.jpg",
+      "zoom": 19,
+      "bounds": [
+        465677,
+        206446,
+        465698,
+        206459
+      ],
+      "width": 5376,
+      "height": 3328,
+      "source": "metro-ortho",
+      "sourceResolutionM": 0.2,
+      "metroFraction": 0.913015,
+      "fillSource": "gsi-photo",
+      "bytes": 3895182,
+      "sha256": "6f2053ede0efb06fa9ddfeba53d38052154a9c6f3990d543fa5d920930b39c76"
+    },
+    {
+      "file": "survey-gsi-ortho.jpg",
+      "zoom": 18,
+      "bounds": [
+        232833,
+        103220,
+        232853,
+        103233
+      ],
+      "width": 5120,
+      "height": 3328,
+      "source": "gsi-photo",
+      "tileCount": 260,
+      "bytes": 4354223,
+      "sha256": "f48b9301f4239aa1e51f825ec712a2d2bde03d13e0ce6c233ed0ebf5c16aa6ff"
+    }
+  ],
+  "elevations": [
+    {
+      "file": "survey-tokyo-dem.png",
+      "zoom": 17,
+      "bounds": [
+        116419,
+        51611,
+        116425,
+        51615
+      ],
+      "width": 1536,
+      "height": 1024,
+      "encoding": "GSI signed RGB24 centimetres; 0x800000 = no data",
+      "vertical": "survey elevation in metres above sea level (Japanese national height datum); not ellipsoidal",
+      "source": "metro-grd25",
+      "sourceResolutionM": 0.25,
+      "validFraction": 0.980429,
+      "metroFraction": 0.867078,
+      "fillSource": "gsi-dem5a",
+      "bytes": 763385,
+      "sha256": "a285e93fd4c2afc51cb9853b68153ba48f8816d976191cb820f6f5b4adf294a5"
+    },
+    {
+      "file": "survey-gsi-dem.png",
+      "zoom": 15,
+      "bounds": [
+        29104,
+        12902,
+        29107,
+        12905
+      ],
+      "width": 768,
+      "height": 768,
+      "encoding": "GSI signed RGB24 centimetres; 0x800000 = no data",
+      "vertical": "survey elevation in metres above sea level (Japanese national height datum); not ellipsoidal",
+      "source": "gsi-dem5a",
+      "sourceResolutionM": 5,
+      "tileCount": 9,
+      "bytes": 493358,
+      "sha256": "de456d8783e1b37e572c797ef7b800ecfe98facafaa97f957bc43dd25cc92aa2"
+    }
+  ],
+  "trees": {
+    "file": "survey-trees.json",
+    "source": "metro-las",
+    "unit": "m",
+    "layout": "tools/tree-layout.json",
+    "sampleCount": 3200,
+    "measuredCount": 68,
+    "method": "p95 above the sampled DEM within a crown disk on the existing park tree site, vegetation colour and multiple-return filters; null for insufficient evidence",
+    "bytes": 16046,
+    "sha256": "ff749e9a4fc27ba51973ea2c9e9889742a7ee9dc7bb2a81eec1c871cad744215"
+  },
+  "surfaces": [
+    {
+      "file": "survey-surface-09ld1873.png",
+      "zoom": 17,
+      "bounds": [
+        116420,
+        51612,
+        116423,
+        51614
+      ],
+      "width": 768,
+      "height": 512,
+      "encoding": "GSI signed RGB24 centimetres; 0x800000 = no data",
+      "vertical": "survey elevation in metres above sea level (Japanese national height datum); not ellipsoidal",
+      "source": "metro-las",
+      "sheet": "09LD1873",
+      "statistic": "90th percentile of returns per 1 m cell, minimum three returns; includes roofs, vegetation and decks",
+      "pointCount": 5299084,
+      "returnsPerSquareMetre": 44.16,
+      "bytes": 125331,
+      "sha256": "271fb6ff6ff5f088551521e5cd09ef0d5abc3fef93586c0d5725f218e7cf043a"
+    },
+    {
+      "file": "survey-surface-09ld1884.png",
+      "zoom": 17,
+      "bounds": [
+        116422,
+        51613,
+        116424,
+        51615
+      ],
+      "width": 512,
+      "height": 512,
+      "encoding": "GSI signed RGB24 centimetres; 0x800000 = no data",
+      "vertical": "survey elevation in metres above sea level (Japanese national height datum); not ellipsoidal",
+      "source": "metro-las",
+      "sheet": "09LD1884",
+      "statistic": "90th percentile of returns per 1 m cell, minimum three returns; includes roofs, vegetation and decks",
+      "pointCount": 6203060,
+      "returnsPerSquareMetre": 51.69,
+      "bytes": 152090,
+      "sha256": "d0720bcbb79a649e465806c7e06cc3a9bea84165f3217c0953ca163ed3be74c8"
+    }
+  ],
+  "rail": {
+    "file": "survey-rail.json",
+    "source": "metro-las",
+    "sheet": "09LD1884",
+    "segmentCount": 29,
+    "sampleCount": 619,
+    "unit": "m",
+    "vertical": "observed lower support surface elevation (Japanese national height datum)",
+    "bytes": 16802,
+    "sha256": "f65c06503a8090cbce0003dc4b29bcecf1bb37fdbe2c33bd4cb8f70509b0c84c"
+  },
+  "sources": [
+    {
+      "id": "metro-ortho",
+      "provider": "東京都",
+      "dataset": "東京都デジタルツイン実現プロジェクト 区部点群データ",
+      "product": "簡易オルソ写真 0.20 m",
+      "catalog": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000029d0000000024",
+      "distribution": "https://www.geospatial.jp/ckan/dataset/tokyopc-23ku-2024",
+      "sourceCrs": "EPSG:6677",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "distributionTerms": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2023/dig/doc/license.pdf",
+      "index": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/Vectortile/23ku/ortho/{z}/{x}/{y}.pbf"
+    },
+    {
+      "id": "metro-grd25",
+      "provider": "東京都",
+      "dataset": "東京都デジタルツイン実現プロジェクト 区部点群データ",
+      "product": "グリッドDEM 0.25 m",
+      "catalog": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000029d0000000024",
+      "distribution": "https://www.geospatial.jp/ckan/dataset/tokyopc-23ku-2024",
+      "sourceCrs": "EPSG:6677",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "distributionTerms": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2023/dig/doc/license.pdf",
+      "index": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/Vectortile/23ku/grd25/{z}/{x}/{y}.pbf"
+    },
+    {
+      "id": "metro-las",
+      "provider": "東京都",
+      "dataset": "東京都デジタルツイン実現プロジェクト 区部点群データ",
+      "product": "航空レーザ LAS（DSM及びグラウンドデータ）",
+      "catalog": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000029d0000000024",
+      "distribution": "https://www.geospatial.jp/ckan/dataset/tokyopc-23ku-2024",
+      "sourceCrs": "EPSG:6677",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "distributionTerms": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2023/dig/doc/license.pdf",
+      "index": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/Vectortile/23ku/lp/{z}/{x}/{y}.pbf"
+    },
+    {
+      "id": "gsi-photo",
+      "provider": "国土地理院",
+      "product": "seamlessphoto",
+      "url": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
+      "catalog": "https://maps.gsi.go.jp/development/ichiran.html",
+      "terms": "https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html"
+    },
+    {
+      "id": "gsi-dem5a",
+      "provider": "国土地理院",
+      "product": "dem5a_png",
+      "url": "https://cyberjapandata.gsi.go.jp/xyz/dem5a_png/{z}/{x}/{y}.png",
+      "catalog": "https://maps.gsi.go.jp/development/ichiran.html",
+      "terms": "https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html"
+    }
+  ],
+  "inputArchives": [
+    {
+      "layer": "grd25",
+      "sheet": "09LD1862",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1862.zip",
+      "bytes": 37094,
+      "sha256": "10cc21accc143a7999bbf9cd4c88cb1cb51d54c5d24cab45f7c875663438974f"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1863",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1863.zip",
+      "bytes": 747896,
+      "sha256": "8ee1b6c311299b5de6bd729ae62567d8daff9c40f37752b628dc1115f866477e"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1864",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1864.zip",
+      "bytes": 1004047,
+      "sha256": "3083142c1f3a95528e91ffafe9b46040e03344b7d6bcdcf0ec9a22b166760a41"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1865",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1865.zip",
+      "bytes": 1060567,
+      "sha256": "4332bd5003998476600b07c577d66aded771860f8d0f1041968362343e43cddc"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1872",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1872.zip",
+      "bytes": 596564,
+      "sha256": "5afe731ce4fb11c706dfd46b74e6435af6bc2745b5ca36835b8cd1de9996d642"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1873",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1873.zip",
+      "bytes": 1288181,
+      "sha256": "787a58459235cc7c1508a60f6635d97f98c851dcfa148750d2afa187866b67d2"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1874",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1874.zip",
+      "bytes": 921181,
+      "sha256": "8723a12c85b2a2ac42c96427f3277c980529739e4a27a58d543e4e2e716c8add"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1875",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1875.zip",
+      "bytes": 747624,
+      "sha256": "f540a12db42785357d59ea0e35f7192bc63598b2ccc4660ebe821c950b941033"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1882",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1882.zip",
+      "bytes": 997189,
+      "sha256": "b476b7997ac140bd23ae988edc40c2fc5bef032c94a178a7698cfb58c22b170d"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1883",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1883.zip",
+      "bytes": 1251605,
+      "sha256": "5728695a5103ab1ace6264ddedb59006fdd8fdca6e8356af30d819df25332edf"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1884",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1884.zip",
+      "bytes": 838646,
+      "sha256": "11f96bd8a3f7bb6eb953d0bca100e5f51c093f1a779fee2ad2af35c0d741c713"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1885",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1885.zip",
+      "bytes": 967939,
+      "sha256": "a25113344467933dee8863d98718a4bf07cc15820187213b1af128e70b9d0831"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1892",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1892.zip",
+      "bytes": 1144736,
+      "sha256": "3f0d3819a87b12fdfd1cec2868a6f54ac99eb4aa070d2ba1e16a6072d8568039"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1893",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1893.zip",
+      "bytes": 1112220,
+      "sha256": "2b86bbb97a262620ab38ee4204fc5e525119597ae45ab9debf0db76b7a2ac97b"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1894",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1894.zip",
+      "bytes": 958425,
+      "sha256": "d550eb5b582fba8276f39842da7185a01a6a762a3f653b1e80c3b81df24a7c6b"
+    },
+    {
+      "layer": "grd25",
+      "sheet": "09LD1895",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/grd25/09LD1895.zip",
+      "bytes": 986595,
+      "sha256": "e9b4c667e77a376399f023b3e95ac2e3c458330009501c1b2fa2b583cd19e175"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1862",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1862.zip",
+      "bytes": 164765,
+      "sha256": "48ca8b4ee134a6a98222c780c13f531a0ef46a0eedc416a4ccf7a62f6c1af502"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1863",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1863.zip",
+      "bytes": 3620577,
+      "sha256": "9129256239781df691af95b07c395450558c18ffd173718cef77e2a5736dbba1"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1864",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1864.zip",
+      "bytes": 6063457,
+      "sha256": "0d2e47148fca35f7093a037260211c5cd0e78cee9aba6f1ba3273e67067e2c31"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1865",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1865.zip",
+      "bytes": 6088450,
+      "sha256": "6a746f720e30d9e2ab7f33803c932fe6c3a2917b505a2cc31b238fc7555ce400"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1872",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1872.zip",
+      "bytes": 2597657,
+      "sha256": "c608186fc1da42e330156a5086a6c3906d352a189adb398408ee0edcf790b149"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1873",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1873.zip",
+      "bytes": 5556167,
+      "sha256": "66961f1438bcbcbe838dfbe34134b4f35714391971fe30e64b7297dced527c85"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1874",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1874.zip",
+      "bytes": 6017897,
+      "sha256": "8fcffa8490e51d3f9da2f13eeaac1a11b5cebfd2da27b70b84193e87d1030fa6"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1875",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1875.zip",
+      "bytes": 6190182,
+      "sha256": "e864f1adb0ac4ee521499ec40acb3398c7fa2ef6a6bc4b87f8265ccecdd75aac"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1882",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1882.zip",
+      "bytes": 4240193,
+      "sha256": "aa8601aa4e60544ae9a7fbd2e9e5172ad673340e9318de0b3543829514e7810d"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1883",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1883.zip",
+      "bytes": 5917143,
+      "sha256": "f315d93187a2b3489f9fed721610bfd50e33ffb80e3a5923c25a2233fcda9894"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1884",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1884.zip",
+      "bytes": 6284905,
+      "sha256": "a60d5b24106d157ff730f68c17c32084350a5442161ca10bbf510e665cefeb21"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1885",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1885.zip",
+      "bytes": 6081004,
+      "sha256": "f63555aaef358cc4f0c0a62f2890980ad37fba98a5e5ce3dda565ec4e7390c9a"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1892",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1892.zip",
+      "bytes": 4856811,
+      "sha256": "73bfb260c523064a4b666cb76f69a5f7f4906a9d7830515a026e3acbbf5ba56d"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1893",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1893.zip",
+      "bytes": 5631522,
+      "sha256": "0b4c77c2df471bf651af42d2eda7214ad7371e9219a9b2878ad1b0201fead981"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1894",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1894.zip",
+      "bytes": 6155990,
+      "sha256": "73cdb77a832a22c12b1c3e7e2d9e46d60d38a32a4b91e9eab80161a2e02768d8"
+    },
+    {
+      "layer": "ortho",
+      "sheet": "09LD1895",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/ortho/09LD1895.zip",
+      "bytes": 6262443,
+      "sha256": "74c229a40229f0f291c47084356fe2f952fb3f661ec4211511c8c6ab2045cf92"
+    },
+    {
+      "layer": "lp",
+      "sheet": "09LD1873",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/lp/09LD1873.zip",
+      "bytes": 95489091,
+      "sha256": "a73cea12c1e373d51c972fb0a20a0da8785884a52ba9fda361e8227426825acd"
+    },
+    {
+      "layer": "lp",
+      "sheet": "09LD1884",
+      "url": "https://gic-tokyo.s3.ap-northeast-1.amazonaws.com/2024/dig/lp/09LD1884.zip",
+      "bytes": 115051841,
+      "sha256": "011d8c0421094b817a8db84c4cc08f0832f2d60e6fc13d47c631552a70746be7"
+    }
+  ]
+}

@@ -156,11 +156,14 @@ async function makeStills(browser) {
     await shot('detail-leaves', "flightCapture.detail('leaves')");
     await shot('detail-leaves-wind', "flightCapture.detail('leaves', 4.1)");
     await shot('detail-trees', "flightCapture.detail('trees')");
+    await shot('detail-rail', "flightCapture.detail('rail')");
+    await shot('detail-furniture', "flightCapture.detail('furniture')");
+    await shot('detail-bridge', "flightCapture.detail('bridge')");
     await shot('detail-glass', "flightCapture.detail('glass')");
-    await shot('flare-on', 'flightCapture.frame(25.5, true)');
-    await shot('flare-off', 'flightCapture.frame(25.5, false)');
+    await shot('flare-on', 'flightCapture.frame(33.5, true)');
+    await shot('flare-off', 'flightCapture.frame(33.5, false)');
   }
-  for (const seconds of [1.7, 5.5, 7.3, 9.4, 12.1, 15.6, 18.2, 22.8, 25.5, 29.7]) {
+  for (const seconds of [1.7, 5.5, 7.3, 9.4, 12.1, 15.6, 18.2, 22.8, 25.3, 27.2, 28.6, 30.0, 31.5, 33.5, 37.7]) {
     await shot(`flight-${seconds.toFixed(1).padStart(4, '0')}`, `flightCapture.frame(${seconds})`);
   }
 }

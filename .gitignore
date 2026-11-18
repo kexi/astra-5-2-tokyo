@@ -13,3 +13,4 @@ output/*.blend
 output/*.blend[0-9]*
 output/.flight-timeline.json
 review/detail-round-*/
+review/open-round-*/
