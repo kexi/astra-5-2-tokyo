@@ -32,6 +32,7 @@ export default defineConfig({
       const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage, 'survey.json', ...surveyFiles, ...railway];
       await Promise.all([
         writeFile('dist/index.html', html.replace(importMap[0], '')),
+        cp('output/tokyo-station-og.jpg', 'dist/output/tokyo-station-og.jpg'),
         cp('src/style.css', 'dist/src/style.css'),
         cp('vendor/LICENSE', 'dist/vendor/LICENSE'),
         cp('vendor/addons/libs/draco', 'dist/libs/draco', { recursive: true }),
