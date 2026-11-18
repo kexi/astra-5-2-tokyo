@@ -26,6 +26,8 @@ Blender 5.2で `just build-blender` を実行すると、`output/tokyo-station.b
 
 ケヤキとクスノキをもとにした木は、根張り、幹、枝、立体の葉を作成しました。葉脈、樹皮、逆光の透過、葉と枝の風揺れをBlenderのノードとシェイプキーで調整できます。Three.jsでも同じBlenderの形状を読み込み、遠くの木は撮影角度別の画像を使って表示します。窓の反射にはPLATEAUの外壁写真から推定した窓面を使います。
 
+PLATEAUの独立木98本は、元データの位置、樹高、樹冠の幅を保ち、幹・枝・葉房をBlenderで作り直しました。編集用プロジェクトでは「05 PLATEAU・樹木」にあり、各オブジェクトのカスタムプロパティから測量元のタイルと地物をたどれます。
+
 ## 撮影と再構築
 
 ```sh
@@ -46,6 +48,8 @@ just build-blender
 ```
 
 基礎都市タイルを保持して橋梁・街路設備・植生などを更新するには、`uv run tools/prepare-data.py --extend-plateau` を使用します。取得先はPLATEAUの各タイルを `assets/manifest.json`、地盤・写真・樹高の元図郭とチェックサムを `assets/survey.json` に記録しています。
+
+独立木を再生成するには、Blenderの実行バイナリで `--background --factory-startup --python-exit-code 1 --python tools/build-street-trees.py` を実行します。このGLBをBlenderとThree.jsが読み込みます。
 
 ## 自動デプロイ
 

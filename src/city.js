@@ -259,6 +259,8 @@ export async function loadCity(progress, anisotropy) {
   const root = new T.Group();
   const buildings = new T.Group();
   root.add(ground, buildings);
+  const streetTreeScene = await loader.loadAsync('assets/yaesu-street-trees.glb');
+  const streetTrees = new Map(streetTreeScene.scene.children.map(group => [group.userData.sourceTile, group]));
   const rail = loader.loadAsync('assets/rail-model.glb').then(gltf => {
     gltf.scene.traverse(object => {
       if (!object.isMesh) return;
@@ -287,10 +289,12 @@ export async function loadCity(progress, anisotropy) {
     while (next < manifest.tiles.length) {
       const tile = manifest.tiles[next++];
       try {
-        const bytes = archives[tile.archive].slice(tile.offset, tile.offset + tile.length);
-        const gltf = await loader.parseAsync(bytes, '');
-        const group = gltf.scene;
-        frame.place(group, tile.center);
+        let group = streetTrees.get(tile.id);
+        if (!group) {
+          const bytes = archives[tile.archive].slice(tile.offset, tile.offset + tile.length);
+          group = (await loader.parseAsync(bytes, '')).scene;
+          frame.place(group, tile.center);
+        }
         const isBuilding = tile.kind === 'building';
         let mapped = false;
         group.traverse(object => {

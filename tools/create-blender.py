@@ -159,18 +159,17 @@ def geo(manifest):
     lo, la = radians(lon), radians(lat)
     sl, cl, sp, cp = sin(lo), cos(lo), sin(la), cos(la)
     n = 6378137 / sqrt(1 - 0.00669437999014 * sp * sp)
-    origin = Vector(
-        (
-            (n + alt) * cp * cl,
-            (n + alt) * cp * sl,
-            (n * (1 - 0.00669437999014) + alt) * sp,
-        )
+    origin = (
+        (n + alt) * cp * cl,
+        (n + alt) * cp * sl,
+        (n * (1 - 0.00669437999014) + alt) * sp,
     )
     enu = Matrix(((-sl, cl, 0), (-sp * cl, -sp * sl, cp), (cp * cl, cp * sl, sp)))
 
     def tile_matrix(center):
         matrix = enu.to_4x4()
-        matrix.translation = enu @ (Vector(center) - origin)
+        # Subtract in double precision before converting Earth-scale values to a Blender vector.
+        matrix.translation = enu @ Vector(tuple(c - o for c, o in zip(center, origin)))
         return matrix
 
     def uv_project(x, y, source):
@@ -258,8 +257,36 @@ def set_projected_uv(obj, manifest, project):
     layer.uv.foreach_set("vector", uv[ids].astype(np.float32).ravel())
 
 
+def import_street_trees(manifest, tile_matrix, subset, group):
+    selected = {
+        t["id"]
+        for t in manifest["tiles"]
+        if t["kind"] == "tree"
+        and (not subset or tile_matrix(t["center"]).translation.xy.length <= subset)
+    }
+    previous = set(bpy.context.scene.objects)
+    bpy.ops.import_scene.gltf(
+        filepath=str(ASSETS / "yaesu-street-trees.glb"),
+        import_scene_as_collection=False,
+        loglevel=4,
+    )
+    created = [o for o in bpy.context.scene.objects if o not in previous]
+    represented = set()
+    for obj in created:
+        source = obj.get("sourceTile")
+        if source not in selected:
+            bpy.data.objects.remove(obj, do_unlink=True)
+            continue
+        represented.add(source)
+        for old in tuple(obj.users_collection):
+            old.objects.unlink(obj)
+        group.objects.link(obj)
+    return represented
+
+
 def import_city(manifest, tile_matrix, photo, project, subset, overlays):
     groups = {kind: collection(name) for kind, name in TILE_COLLECTIONS.items()}
+    street_trees = import_street_trees(manifest, tile_matrix, subset, groups["tree"])
     road = terrain_material("道路・写真と舗装", photo, True, overlays)
     grass, graph, surface = new_surface("草地・緑被", (0.13, 0.19, 0.057), 0.92)
     noise_bump(graph, surface, 170, 0.51, 0.14, "草葉の起伏")
@@ -282,6 +309,9 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
                 placement = tile_matrix(tile["center"])
                 kind = tile["kind"]
                 if subset and placement.translation.xy.length > subset:
+                    continue
+                if tile["id"] in street_trees:
+                    added += 1
                     continue
                 start = tile["offset"]
                 temp.write_bytes(archive[start : start + tile["length"]])

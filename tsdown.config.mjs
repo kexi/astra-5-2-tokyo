@@ -24,6 +24,7 @@ export default defineConfig({
       // DRACOLoader resolves ../libs/draco relative to the bundled module in dist/src/.
       const manifest = JSON.parse(await readFile('assets/manifest.json', 'utf8'));
       const models = ['near', 'mid', 'far', 'horizon'].map(level => `park-trees-${level}.glb`);
+      models.push('yaesu-street-trees.glb');
       const foliage = ['park-foliage-zelkova.png', 'park-foliage-camphor.png'];
       const survey = JSON.parse(await readFile('assets/survey.json', 'utf8'));
       const surveyFiles = [...survey.photos, ...survey.elevations, ...(survey.surfaces ?? []), survey.trees].map(layer => layer.file);

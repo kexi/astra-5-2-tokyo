@@ -180,12 +180,15 @@ def track_mesh(survey, height_offset):
             size = math.hypot(bx - ax, by - ay)
             nx, ny = (ay - by) / size, (bx - ax) / size
             ballast.beam((ax, ay, az + 0.025), (bx, by, bz + 0.025), gauge + 1.07, 0.14)
-            for distance in (-gauge / 2, gauge / 2):
+            # Track gauge is measured between the inner faces, not along the rail axes.
+            head_width = 0.076
+            rail_center = (gauge + head_width) / 2
+            for distance in (-rail_center, rail_center):
                 dx, dy = nx * distance, ny * distance
                 steel.beam(
                     (ax + dx, ay + dy, az + 0.225),
                     (bx + dx, by + dy, bz + 0.225),
-                    0.076,
+                    head_width,
                     0.105,
                 )
             while next_sleeper <= total + size:
