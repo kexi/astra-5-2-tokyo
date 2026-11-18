@@ -134,7 +134,62 @@ export function makeSky() {
   return mesh;
 }
 
+const facadeReflection = { value: null };
+const facadeProbeReady = { value: 0 };
+const reflectionOrigin = new T.Vector3(-445, 2, 55);
+
+function addWindowReflections(shader) {
+  shader.uniforms.facadeReflection = facadeReflection;
+  shader.uniforms.facadeProbeReady = facadeProbeReady;
+  shader.uniforms.facadeProbeOrigin = { value: reflectionOrigin };
+  shader.fragmentShader = `
+    uniform samplerCube facadeReflection;
+    uniform float facadeProbeReady;
+    uniform vec3 facadeProbeOrigin;
+  ` + shader.fragmentShader.replace('#include <normal_fragment_maps>', `
+    #include <normal_fragment_maps>
+    vec3 facadeNormal = transformNormalByInverseViewMatrix(normal, viewMatrix);
+    float verticalWall = 1. - smoothstep(.15, .53, abs(facadeNormal.y));
+    vec3 photo = sampledDiffuseColor.rgb;
+    vec3 luminanceWeights = vec3(.2126, .7152, .0722);
+    float lightness = dot(photo, luminanceWeights);
+    // A coarser mip supplies the local wall tone without assuming an atlas orientation or pane grid.
+    float localLight = dot(texture2D(map, vMapUv, 2.6).rgb, luminanceWeights);
+    float inset = smoothstep(.12, .46, (localLight - lightness) / (.038 + localLight));
+    float cool = smoothstep(.005, .24, (max(photo.g, photo.b) - photo.r) / (.045 + lightness));
+    float blue = smoothstep(-.015, .24, (photo.b - photo.r) / (.038 + lightness));
+    float dark = 1. - smoothstep(.055, .24, lightness);
+    float bluePane = blue * (.25 + .75 * inset);
+    float insetPane = inset * dark;
+    float pane = verticalWall * cool * max(bluePane, insetPane);
+    float paneRoughness = .20 + .12 * (1. - blue) + .09 * (1. - inset);
+    roughnessFactor = mix(roughnessFactor, paneRoughness, .87 * pane);
+  `).replace('#include <opaque_fragment>', `
+    bool hasVisibleGlazing = pane > .008;
+    if (hasVisibleGlazing) {
+      vec3 towardEye = normalize(cameraPosition - terrainPoint);
+      vec3 reflection = reflect(-towardEye, facadeNormal);
+      float cosView = clamp(dot(towardEye, facadeNormal), 0., 1.);
+      float fresnel = .055 + .945 * pow(1. - cosView, 5.);
+      vec3 reflected = airColor(reflection);
+      vec3 street = vec3(.075, .081, .077);
+      reflected = mix(street, reflected, smoothstep(-.19, .13, reflection.y));
+      // Use the existing moat probe near the skyline it actually captured.
+      float nearProbe = 1. - smoothstep(320., 1650., length(terrainPoint.xz - facadeProbeOrigin.xz));
+      float skyline = 1. - smoothstep(.23, .73, reflection.y);
+      vec3 city = textureLod(facadeReflection, reflection, 1. + 5. * paneRoughness).rgb;
+      reflected = mix(reflected, city, .82 * nearProbe * skyline * facadeProbeReady);
+      float reflectedLightness = dot(reflected, luminanceWeights);
+      reflected /= 1. + .58 * reflectedLightness;
+      float coverage = pane * (.075 + .50 * fresnel) * (1. - .35 * smoothstep(500., 1700., vViewPosition.z));
+      outgoingLight = mix(outgoingLight, reflected * vec3(.88, .96, 1.), coverage);
+    }
+    #include <opaque_fragment>
+  `);
+}
+
 export function surfaceMaterial(kind, texture, projectMap) {
+  const hasWindowPhoto = kind === 'building' && Boolean(texture);
   const material = new T.MeshStandardMaterial({
     map: texture ?? null,
     color: { ground: '#e9e4db', road: '#e3dfd9', grass: '#6b7740', building: '#cfc6b6', leaf: '#70864c', trunk: '#655647' }[kind],
@@ -196,12 +251,11 @@ export function surfaceMaterial(kind, texture, projectMap) {
     }[kind]).replace('#include <tonemapping_fragment>', `
         gl_FragColor.rgb = aerialPerspective(gl_FragColor.rgb, terrainPoint, vViewPosition.z);
         #include <tonemapping_fragment>`);
+    if (hasWindowPhoto) addWindowReflections(shader);
   };
-  material.customProgramCacheKey = () => kind;
+  material.customProgramCacheKey = () => hasWindowPhoto ? 'building-photo' : kind;
   return material;
 }
-
-const reflectionOrigin = new T.Vector3(-445, 2, 55);
 
 export function captureMoatReflection(renderer, scene, material) {
   const cube = new T.WebGLCubeRenderTarget(256, {
@@ -209,10 +263,14 @@ export function captureMoatReflection(renderer, scene, material) {
   });
   const camera = new T.CubeCamera(1, 6500, cube);
   camera.position.copy(reflectionOrigin);
+  facadeReflection.value = null;
+  facadeProbeReady.value = 0;
   material.visible = false;
   camera.update(renderer, scene);
   material.visible = true;
   material.uniforms.cityReflection.value = cube.texture;
+  facadeReflection.value = cube.texture;
+  facadeProbeReady.value = 1;
 }
 
 export function waterMaterial() {

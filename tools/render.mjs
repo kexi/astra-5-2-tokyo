@@ -153,10 +153,14 @@ async function makeStills(browser) {
     await shot('high-nadir', 'flightCapture.orbit(0, 850, 105, false)');
     await shot('detail-water', "flightCapture.detail('moat')");
     await shot('detail-grass', "flightCapture.detail('grass')");
-    await shot('flare-on', 'flightCapture.frame(21.5, true)');
-    await shot('flare-off', 'flightCapture.frame(21.5, false)');
+    await shot('detail-leaves', "flightCapture.detail('leaves')");
+    await shot('detail-leaves-wind', "flightCapture.detail('leaves', 4.1)");
+    await shot('detail-trees', "flightCapture.detail('trees')");
+    await shot('detail-glass', "flightCapture.detail('glass')");
+    await shot('flare-on', 'flightCapture.frame(25.5, true)');
+    await shot('flare-off', 'flightCapture.frame(25.5, false)');
   }
-  for (const seconds of [1.7, 5.5, 8.1, 11.6, 14.2, 18.8, 21.5, 25.7]) {
+  for (const seconds of [1.7, 5.5, 7.3, 9.4, 12.1, 15.6, 18.2, 22.8, 25.5, 29.7]) {
     await shot(`flight-${seconds.toFixed(1).padStart(4, '0')}`, `flightCapture.frame(${seconds})`);
   }
 }
@@ -217,7 +221,7 @@ try {
       const orbiting = orbit.getAttribute("aria-pressed");
       flare.click();
       const flareOff = flare.getAttribute("aria-pressed");
-      seek.value = 14;
+      seek.value = 18;
       seek.dispatchEvent(new Event("input", { bubbles: true }));
       await new Promise(requestAnimationFrame);
       return {initial, playing, orbiting, flareOff, orbitAfterScrub: orbit.getAttribute("aria-pressed"), shot: document.getElementById("shot").textContent};

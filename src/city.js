@@ -2,6 +2,8 @@ import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader, DRACO_GLTF_CONFIG } from 'three/addons/loaders/DRACOLoader.js';
 import { surfaceMaterial, waterMaterial } from './materials.js';
+import { loadParkTrees } from './trees.js';
+import treeLayout from '../tools/tree-layout.json' with { type: 'json' };
 
 async function fetchAsset(file, format) {
   const response = await fetch('assets/' + file);
@@ -139,46 +141,19 @@ function groundModel(manifest, frame, photo, dem) {
   return { ground, groundHeight, uv, carveWaterbed, land };
 }
 
-function addParkTrees(parent, groundHeight, uv, photo) {
-  const bitmap = pixels(photo.image, 2500);
-  const foliage = new T.IcosahedronGeometry(1, 1);
-  const leafPoints = foliage.attributes.position;
-  for (let i = 0; i < leafPoints.count; i++) {
-    const x = leafPoints.getX(i), y = leafPoints.getY(i), z = leafPoints.getZ(i);
-    const offset = .86 + .18 * Math.sin(x * 10.2 + z * 9.2) * Math.cos(y * 6.3);
-    leafPoints.setXYZ(i, x * offset, y * offset, z * offset);
-  }
-  foliage.computeVertexNormals();
-  const leaves = new T.InstancedMesh(foliage, surfaceMaterial('leaf'), 3200);
-  const dummy = new T.Object3D();
-  const color = new T.Color();
-  let count = 0, seed = 156813;
-  const rand = () => {
-    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
-    return seed / 2 ** 32;
-  };
-  for (let z = -1450; z < 1150; z += 8.4) {
-    for (let x = -1960; x < -350; x += 8.4) {
-      const tx = x + (rand() - .5) * 8, tz = z + (rand() - .5) * 8;
-      const [u, v] = uv(tx, tz);
-      const index = bitmapOffset(bitmap, u, v);
-      const [r, g, b] = bitmap.data.subarray(index, index + 3);
-      if (g < r * 1.085 || g < b * 1.19 || g < 26 || g > 140 || count >= leaves.instanceMatrix.count) continue;
-      const scale = 2.9 + rand() * 3;
-      dummy.position.set(tx, groundHeight(tx, tz) + scale * 1.2, tz);
-      dummy.scale.set(scale, scale * (1.06 + rand() * .3), scale * (.85 + rand() * .24));
-      dummy.rotation.y = rand() * Math.PI;
-      dummy.updateMatrix();
-      leaves.setMatrixAt(count, dummy.matrix);
-      color.setHSL(.17 + rand() * .075, .18 + rand() * .18, .47 + rand() * .26);
-      leaves.setColorAt(count++, color);
-    }
-  }
-  leaves.count = count;
-  leaves.castShadow = true;
-  leaves.receiveShadow = true;
-  parent.add(leaves);
-  return count;
+function parkSites(groundHeight) {
+  const tree = new T.Object3D();
+  return treeLayout.map(([x, north, scale, angle], index) => {
+    tree.position.set(x, groundHeight(x, -north), -north);
+    tree.scale.setScalar(scale);
+    tree.rotation.y = angle;
+    tree.updateMatrix();
+    const tone = .84 + .16 * (.5 + .5 * Math.sin(index * 2.39996));
+    const color = new T.Color(.94*tone, tone, .86*tone);
+    const center = tree.position.clone();
+    center.y += 4.7*scale;
+    return { matrix: tree.matrix.clone(), color, species: index%2, center, radius: 8.8*scale };
+  });
 }
 
 export async function loadCity(progress, anisotropy) {
@@ -193,9 +168,9 @@ export async function loadCity(progress, anisotropy) {
   photo.colorSpace = T.SRGBColorSpace;
   photo.anisotropy = Math.min(12, anisotropy);
   const { ground, groundHeight, uv, carveWaterbed, land } = groundModel(manifest, frame, photo, dem);
-  const trees = addParkTrees(ground, groundHeight, uv, photo);
   const draco = new DRACOLoader().setDecoderPath(DRACO_GLTF_CONFIG).setWorkerLimit(6);
   const loader = new GLTFLoader().setDRACOLoader(draco);
+  const park = loadParkTrees(ground, parkSites(groundHeight), loader);
   const root = new T.Group();
   const buildings = new T.Group();
   root.add(ground, buildings);
@@ -258,7 +233,7 @@ export async function loadCity(progress, anisotropy) {
       if (++done % 24 === 0 || done === manifest.tiles.length) progress(done, manifest.tiles.length);
     }
   }
-  await Promise.all(Array.from({ length: 12 }, worker));
+  const [trees] = await Promise.all([park, ...Array.from({ length: 12 }, worker)]);
   draco.dispose();
   if (failures.length) throw new Error(`${failures.length}件の都市タイルを読み込めませんでした`);
   root.updateMatrixWorld(true);
@@ -267,5 +242,5 @@ export async function loadCity(progress, anisotropy) {
   });
   land.attributes.position.needsUpdate = true;
   land.computeVertexNormals();
-  return { root, buildings, water, counts: { tiles: done, textured, triangles, trees } };
+  return { root, buildings, water, trees, counts: { tiles: done, textured, triangles, trees: trees.count } };
 }

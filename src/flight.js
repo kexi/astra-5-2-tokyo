@@ -7,6 +7,11 @@ const shots = [
     targets: [[-348, 11, -40], [-104, 31, -45], [37, 49, -10]],
   },
   {
+    name: '堀沿いの木漏れ日', duration: 4, fov: 50,
+    positions: [[-527, 9.1, 31], [-530, 8.1, 25], [-531, 7.2, 19.5]],
+    targets: [[-543, 8.0, 11], [-543, 8.4, 11.5], [-542, 8.9, 12.5]],
+  },
+  {
     name: '東京駅 丸の内駅舎', duration: 6.5, fov: 55,
     positions: [[-365, 94, -71], [-253, 80, -43], [-128, 63, -16]],
     targets: [[-27, 16, 0], [-23, 18, -4], [-20, 19, -6]],
@@ -60,6 +65,9 @@ export function reviewPose(camera, bearing, height, distance) {
 
 const detailViews = {
   moat: { position: [-500, 35, 195], target: [-430, 2, -32] },
+  leaves: { position: [-530, 7.2, 20], target: [-542, 8.9, 12.5] },
+  trees: { position: [-560, 10.7, 27], target: [-543, 6.2, 12.5] },
+  glass: { position: [-314, 88, -59], target: [-145, 32, -2] },
   grass: { position: [-930, 70, 62], target: [-786, 3, 125] },
 };
 

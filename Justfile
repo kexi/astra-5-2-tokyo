@@ -20,3 +20,8 @@ check:
     actionlint
     pinact run --check --fix=false --no-api
     gitleaks dir --redact --no-banner --max-target-megabytes 5 .
+
+# 写真テクスチャとカメラを含むBlenderプロジェクトを生成する
+build-blender:
+    node tools/export-flight.mjs output/.flight-timeline.json
+    "{{ env_var_or_default("BLENDER_BIN", "/Applications/Blender.app/Contents/MacOS/Blender") }}" --background --factory-startup --python-exit-code 1 --python tools/create-blender.py -- --flight output/.flight-timeline.json

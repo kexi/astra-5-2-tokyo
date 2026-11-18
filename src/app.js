@@ -44,6 +44,7 @@ async function initialize() {
   sunlight.position.add(sunlight.target.position);
   sunlight.castShadow = true;
   sunlight.shadow.mapSize.set(4096, 4096);
+  sunlight.shadow.camera.layers.enable(2);
   sunlight.shadow.camera.left = sunlight.shadow.camera.bottom = -1530;
   sunlight.shadow.camera.right = sunlight.shadow.camera.top = 1530;
   sunlight.shadow.camera.near = 750;
@@ -107,6 +108,7 @@ async function initialize() {
   function paint(seconds, withFlare = showFlare) {
     sky.material.uniforms.seconds.value = seconds;
     city.water.uniforms.seconds.value = seconds;
+    city.trees.update(camera, seconds);
     renderer.render(scene, camera);
     flare(camera, city.buildings, seconds, withFlare, capture);
   }

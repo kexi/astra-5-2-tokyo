@@ -23,7 +23,9 @@ export default defineConfig({
     async 'build:done'() {
       // DRACOLoader resolves ../libs/draco relative to the bundled module in dist/src/.
       const manifest = JSON.parse(await readFile('assets/manifest.json', 'utf8'));
-      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives];
+      const models = ['near', 'mid', 'far', 'horizon'].map(level => `park-trees-${level}.glb`);
+      const foliage = ['park-foliage-zelkova.png', 'park-foliage-camphor.png'];
+      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage];
       await Promise.all([
         writeFile('dist/index.html', html.replace(importMap[0], '')),
         cp('src/style.css', 'dist/src/style.css'),
