@@ -5,6 +5,7 @@ PLATEAUの2025年度3D都市モデルを使い、東京駅・丸の内・八重�
 - [GitHub Pagesで3Dモデルを見る](https://kexi.github.io/astra-5-2-tokyo/)
 - [空撮動画（MP4）](output/tokyo-station.mp4)
 - [360°レビュー](review/README.md)
+- [建物23,115件のLODと画像テクスチャ](review/building-textures.md)
 
 画面下部の「空撮を再生」でカメラルートを再生できます。「360° 見回す」に切り替えると、ドラッグで回転、スクロールでズームできます。ボタンにフォーカスを置いた状態では、矢印キーで方位と俯角を変更できます。フレアの表示は切り替えられます。
 
@@ -18,7 +19,7 @@ pnpm run build
 python3 -m http.server 8421 --bind 127.0.0.1 --directory dist
 ```
 
-ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。初回表示では地形・建物テクスチャを含む約166 MiBのデータを読み込みます。
+ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。初回表示では地形・建物テクスチャを含む約170 MiBのデータを読み込みます。
 
 ## Blenderで編集する
 
@@ -43,9 +44,13 @@ just render
 uv run tools/prepare-data.py
 uv run tools/prepare-rail.py
 uv run tools/prepare-survey.py
+uv run tools/prepare-park-ground.py
+uv run tools/prepare-expressway.py
 uv run tools/build-rail-model.py
 just build-blender
 ```
+
+丸の内駅舎と新丸の内ビルディングでは同じ建物の写真から壁の写り込みを補修し、八重洲のグランルーフ東面は外観資料から推定して描き直しました。元の建物形状とUVを保持しています。[修正前後の比較](review/README.md#空撮で見つけた写真の誤投影)
 
 基礎都市タイルを保持して橋梁・街路設備・植生などを更新するには、`uv run tools/prepare-data.py --extend-plateau` を使用します。取得先はPLATEAUの各タイルを `assets/manifest.json`、地盤・写真・樹高の元図郭とチェックサムを `assets/survey.json` に記録しています。
 

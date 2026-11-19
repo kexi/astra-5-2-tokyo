@@ -29,9 +29,10 @@ export default defineConfig({
       const survey = JSON.parse(await readFile('assets/survey.json', 'utf8'));
       const surveyFiles = [...survey.photos, ...survey.elevations, ...(survey.surfaces ?? []), survey.trees].map(layer => layer.file);
       const railway = ['rail-model.glb', 'rail-reference.json', 'rail-tracks.json', 'survey-rail.json', 'RAIL-SOURCES.md'];
-      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage, 'survey.json', ...surveyFiles, ...railway];
+      const cityFiles = ['manifest.json', manifest.photo.file, manifest.elevation.file, ...manifest.archives, ...models, ...foliage, 'park-ground.json', 'park-ground.png', 'nihonbashi-expressway.png', 'survey.json', ...surveyFiles, ...railway];
       await Promise.all([
         writeFile('dist/index.html', html.replace(importMap[0], '')),
+        cp('review/building-textures.csv', 'dist/review/building-textures.csv'),
         cp('output/tokyo-station-og.jpg', 'dist/output/tokyo-station-og.jpg'),
         cp('src/style.css', 'dist/src/style.css'),
         cp('vendor/LICENSE', 'dist/vendor/LICENSE'),

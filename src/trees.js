@@ -89,11 +89,16 @@ function specimenMaterial(isLeaf, level, clock) {
 function atlasMaterial(texture, live, level) {
   texture.colorSpace = T.SRGBColorSpace;
   return new T.ShaderMaterial({
+    lights: true,
     uniforms: {
+      ...T.UniformsUtils.clone(T.UniformsLib.lights),
       canopyMap: { value: texture }, live, fadeStart: { value: level.leave-level.feather },
       fadeEnd: { value: level.leave+level.feather }, sunDirection: { value: sun }, mist: { value: mist },
     },
     vertexShader: `
+      #include <common>
+      #include <shadowmap_pars_vertex>
+      uniform vec3 sunDirection;
       varying vec2 tileUV, atlasView;
       varying vec3 worldPoint, tint;
       varying float metres, depth;
@@ -107,7 +112,9 @@ function atlasMaterial(texture, live, level) {
         vec3 right = vec3(towardEye.z,0.,-towardEye.x);
         right = dot(right,right)>.0001 ? normalize(right) : vec3(1.,0.,0.);
         vec3 up = normalize(cross(towardEye,right));
-        worldPoint = center + (right*position.x + up*position.y)*12.*scale;
+        float breadth = length(instanceMatrix[0].xyz);
+        float projectedHeight = length(vec2(up.y*scale, length(up.xz)*breadth));
+        worldPoint = center + (right*position.x*breadth + up*position.y*projectedHeight)*12.;
         float localX = dot(towardEye,normalize(instanceMatrix[0].xyz));
         float localZ = dot(towardEye,normalize(instanceMatrix[2].xyz));
         atlasView = vec2(fract(atan(localX,localZ)/6.2831853)*4.,
@@ -115,10 +122,20 @@ function atlasMaterial(texture, live, level) {
         tileUV = uv;
         tint = instanceColor;
         vec4 viewPoint = viewMatrix * vec4(worldPoint,1.);
+        // The atlas already contains the crown's self-shading. Sample daylight
+        // on its sunward side so taller trees and buildings still shade it.
+        vec4 worldPosition = vec4(worldPoint + 2.7*breadth*sunDirection,1.);
+        vec3 transformedNormal = mat3(viewMatrix)*vec3(0.,1.,0.);
+        #include <shadowmap_vertex>
         depth = -viewPoint.z;
         gl_Position = projectionMatrix * viewPoint;
       }`,
     fragmentShader: `
+      #include <common>
+      #include <packing>
+      #include <shadowmap_pars_fragment>
+      uniform bool receiveShadow;
+      #include <shadowmask_pars_fragment>
       uniform sampler2D canopyMap;
       uniform float live, fadeStart, fadeEnd;
       uniform vec3 sunDirection, mist;
@@ -140,7 +157,7 @@ function atlasMaterial(texture, live, level) {
         vec4 upper = mix(viewSample(tile+vec2(0,1)),viewSample(tile+1.),f.x);
         vec4 sampleColor = mix(lower,upper,f.y);
         if (sampleColor.a < .38) discard;
-        vec3 rgb = sampleColor.rgb / max(sampleColor.a,.001) * tint;
+        vec3 rgb = sampleColor.rgb / max(sampleColor.a,.001) * tint * mix(.43,1.,getShadowMask());
         vec3 dir = normalize(worldPoint-cameraPosition);
         float sunny = max(dot(dir,sunDirection),0.);
         vec3 haze = mist*1.22 + vec3(.63,.35,.14)*pow(sunny,9.) + vec3(1.8,1.01,.43)*pow(sunny,95.);
@@ -178,6 +195,7 @@ export async function loadParkTrees(parent, sites, loader) {
     const texture = await new T.TextureLoader().loadAsync(`assets/park-foliage-${name.toLowerCase()}.png`);
     const mesh = new T.InstancedMesh(new T.PlaneGeometry(1,1),atlasMaterial(texture,live,levels[1]),sites.length);
     mesh.name = `${name} | baked leaf silhouette`;
+    mesh.receiveShadow = true;
     mesh.count = 0;
     mesh.frustumCulled = false;
     parent.add(mesh);

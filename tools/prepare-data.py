@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["DracoPy==2.2.0", "numpy==2.4.4"]
+# dependencies = ["DracoPy==2.2.0", "numpy==2.4.4", "pillow==13.0.0"]
 # ///
 """Cut official PLATEAU and GSI layers around Tokyo Station."""
 import argparse
@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import urlopen
+
+from facade_atlas import FACADES, repair_facade
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
@@ -106,10 +108,11 @@ def unpack(entry):
     gltf.get("extensions", {}).pop("CESIUM_RTC", None)
     gltf["extensionsUsed"] = [ext for ext in gltf.get("extensionsUsed", []) if ext != "CESIUM_RTC"]
     gltf["extensionsRequired"] = [ext for ext in gltf.get("extensionsRequired", []) if ext != "CESIUM_RTC"]
-    data = resize_textures(gltf, data[json_end+8:], center, kind)
-    return {"id": f"{name}-{Path(url).stem}", "kind": kind, "center": center, "source": url}, data
+    tile_id = f"{name}-{Path(url).stem}"
+    data = resize_textures(gltf, data[json_end+8:], center, kind, tile_id)
+    return {"id": tile_id, "kind": kind, "center": center, "source": url}, data
 
-def resize_textures(gltf, binary, center, kind):
+def resize_textures(gltf, binary, center, kind, tile_id=None):
     lon, lat = map(math.radians, ORIGIN[:2])
     n = 6378137 / math.sqrt(1 - .00669438 * math.sin(lat)**2)
     base = (n*math.cos(lat)*math.cos(lon), n*math.cos(lat)*math.sin(lon), n*.99330562*math.sin(lat))
@@ -122,7 +125,9 @@ def resize_textures(gltf, binary, center, kind):
     for i, view in enumerate(gltf["bufferViews"]):
         start = view.get("byteOffset", 0)
         chunk = binary[start:start + view["byteLength"]]
-        if kind in caps and i in image_views and len(chunk) > 9000:
+        if tile_id in FACADES and i in image_views:
+            chunk = repair_facade(tile_id, chunk)
+        elif kind in caps and i in image_views and len(chunk) > 9000:
             codec = {"image/webp": "webp", "image/jpeg": "jpeg", "image/png": "png"}[image_views[i]]
             resized = subprocess.run(
                 ["magick", "-limit", "thread", "1", f"{codec}:-", "-resize", f"{width}x{width}>",

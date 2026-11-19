@@ -1,0 +1,17 @@
+{
+  "file": "nihonbashi-expressway.png",
+  "bounds": [430, 250, 1100, 440],
+  "pixelsPerMeter": 6,
+  "bridgeDeckHeight": 7,
+  "minimumUpNormal": 0.9,
+  "tiles": {
+    "roads-data86": [4, 11],
+    "roads-data90": [2, 12, 24],
+    "roads-data96": [15],
+    "chuo-roads-data30": [6],
+    "chuo-roads-data43": [6, 15],
+    "chuo-roads-data66": [4, 19, 39],
+    "13101_brid_lod2-data2": [6, 13],
+    "13102_brid_lod2-data6": [4]
+  }
+}

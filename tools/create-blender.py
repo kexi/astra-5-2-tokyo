@@ -294,7 +294,10 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
     basic_tree, graph, surface = new_surface(
         "PLATEAU樹木・樹冠", (0.08, 0.15, 0.043), 0.76
     )
+    from blender_expressway import apply_deck_surface, deck_settings
     from blender_glass import enhance_building_material
+    from blender_hedges import HEDGE_TILE, apply_hedge_surface
+    from blender_street import ROAD_LIFT, STREET_TILES, apply_street_surface
 
     overrides = {"road": road, "grass": grass, "water": water, "tree": basic_tree}
     waters = []
@@ -331,7 +334,7 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
                         if kind == "water":
                             transform.translation.z += 0.70
                         elif kind == "road":
-                            transform.translation.z += 0.08
+                            transform.translation.z += ROAD_LIFT
                         obj.matrix_world = transform
                     obj.name = f"PLATEAU・{tile['id']}"
                     obj["source"] = tile["source"]
@@ -366,6 +369,12 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
                         for material in slots:
                             if material is not None:
                                 enhance_building_material(material)
+                    elif tile["id"] == HEDGE_TILE:
+                        apply_hedge_surface(obj, new_surface)
+                    if tile["id"] in STREET_TILES:
+                        apply_street_surface(obj, tile["id"], new_surface)
+                    if tile["id"] in deck_settings["tiles"]:
+                        apply_deck_surface(obj, tile["id"], new_surface)
                 added += 1
                 if added % 100 == 0:
                     print(f"Imported {added} PLATEAU tiles", flush=True)
@@ -593,12 +602,13 @@ def main():
     from blender_trees import create_tree_assets, place_trees
 
     survey = json.loads((ASSETS / "survey.json").read_text())
+    park_ground = json.loads((ASSETS / "park-ground.json").read_text())
     railway = json.loads((ASSETS / "rail-reference.json").read_text())
     geoid = railway["verticalDatum"]["geoidHeight"]
     height = dem_sample(
         manifest, project, survey["elevations"], loaded_image, array_image, geoid
     )
-    overlays = world_photos(survey["photos"], project, loaded_image)
+    overlays = world_photos([park_ground["layer"], *survey["photos"]], project, loaded_image)
     waters = import_city(manifest, placement, photo, project, params.crop, overlays)
     mesh_from_ground(
         collection("00  地理院と東京都・地形"),
@@ -611,6 +621,8 @@ def main():
     )
     heights = json.loads((ASSETS / survey["trees"]["file"]).read_text())["heights"]
     layout = json.loads((HERE / "tree-layout.json").read_text())
+    layout.extend(tree[:4] for tree in park_ground["trees"])
+    heights.extend(tree[4] for tree in park_ground["trees"])
     positions = tree_placements(
         layout, height, heights, manifest.get("surveyedTrees", [])
     )

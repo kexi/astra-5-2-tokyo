@@ -1,0 +1,6 @@
+{
+  "tile": "vegetation-data0",
+  "batches": [16, 19, 31, 45, 59, 61, 65],
+  "leafColor": [0.11, 0.16, 0.068],
+  "repeatsPerMeter": 1.22
+}

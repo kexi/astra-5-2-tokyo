@@ -1,0 +1,28 @@
+{
+  "roadLift": 0.08,
+  "tiles": {
+    "roads-data150": {"3": "asphalt"},
+    "chuo-roads-data83": {"13": "duplicate"},
+    "13101_frn_lod3-data494": {"0": "cover", "1": "gutter"},
+    "13101_frn_lod3-data496": {"0": "cover", "1": "cover"},
+    "13101_frn_lod3-data500": {"0": "paint"},
+    "13101_frn_lod3-data504": {"0": "gutter"},
+    "13101_frn_lod3-data511": {"0": "paint", "1": "paint", "4": "paint"},
+    "13101_frn_lod3-data512": {"1": "cover", "2": "cover", "7": "paint"},
+    "13101_frn_lod3-data515": {"0": "cover"},
+    "13101_frn_lod3-data519": {"1": "cover"},
+    "13101_frn_lod3-data520": {"2": "cover", "4": "cover"},
+    "13101_frn_lod3-data521": {"9": "cover", "10": "paint", "12": "cover", "13": "paint"},
+    "13101_frn_lod3-data537": {"1": "paint"},
+    "13101_frn_lod3-data546": {"0": "cover"},
+    "13101_frn_lod3-data547": {"4": "cover", "8": "cover"},
+    "13101_frn_lod3-data548": {"1": "paint", "2": "paint"},
+    "13101_frn_lod3-data549": {"4": "gutter"}
+  },
+  "surfaces": {
+    "asphalt": {"color": [0.091, 0.092, 0.095], "roughness": 0.95, "metalness": 0},
+    "paint": {"color": [0.62, 0.61, 0.565], "roughness": 0.87, "metalness": 0},
+    "gutter": {"color": [0.138, 0.14, 0.137], "roughness": 0.93, "metalness": 0},
+    "cover": {"color": [0.064, 0.073, 0.075], "roughness": 0.74, "metalness": 0.23}
+  }
+}

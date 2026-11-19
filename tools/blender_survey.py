@@ -114,7 +114,23 @@ def project_photos(graph, original, surface, overlays, shade_banks):
             mix.inputs[0],
         )
         link(color, mix.inputs[1])
-        link(texture.outputs["Color"], mix.inputs[2])
+        patch_color = texture.outputs["Color"]
+        if image.name == "park-ground.png":
+            world_axes = nodes.new("ShaderNodeSeparateXYZ")
+            link(geometry.outputs["Position"], world_axes.inputs[0])
+            is_lawn = operation("LESS_THAN", world_axes.outputs["X"], -420)
+            tufts = nodes.new("ShaderNodeTexNoise")
+            tufts.label = "補正した芝・細かな濃淡"
+            tufts.inputs["Scale"].default_value = 6.8
+            tufts.inputs["Detail"].default_value = 1.1
+            link(geometry.outputs["Position"], tufts.inputs["Vector"])
+            grain = nodes.new("ShaderNodeMixRGB")
+            grain.blend_type = "MULTIPLY"
+            link(is_lawn, grain.inputs[0])
+            link(patch_color, grain.inputs[1])
+            link(operation("ADD", .78, operation("MULTIPLY", tufts.outputs["Fac"], .44)), grain.inputs[2])
+            patch_color = grain.outputs[0]
+        link(patch_color, mix.inputs[2])
         color = mix.outputs["Color"]
     if shade_banks:
         axes = nodes.new("ShaderNodeSeparateXYZ")

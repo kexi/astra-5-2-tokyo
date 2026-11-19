@@ -218,7 +218,7 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
       const declarations = [];
       const blending = [];
       for (let i = overlays.length - 1; i >= 0; i--) {
-        const { texture, transform } = overlays[i];
+        const { texture, transform, parkSurface } = overlays[i];
         shader.uniforms['detailPhoto' + i] = { value: texture };
         shader.uniforms['detailProjection' + i] = { value: transform };
         declarations.push(`uniform sampler2D detailPhoto${i}; uniform vec4 detailProjection${i};`);
@@ -227,6 +227,15 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
           vec2 edge${i} = min(patchUV${i}, 1. - patchUV${i});
           vec4 detail${i} = texture2D(detailPhoto${i}, patchUV${i});
           float blend${i} = smoothstep(0., .035, min(edge${i}.x, edge${i}.y)) * detail${i}.a;
+          ${parkSurface ? `
+            // Repaired lawn polygons lie west of the moat. The two station rows
+            // use the same patch on stone paving and keep their original grain.
+            float grassPixel = length(fwidth(terrainPoint.xz));
+            float grassTufts = surfaceDetail(terrainPoint * vec3(8.3, 1., 5.4)) - .5;
+            float grassTips = surfaceDetail(terrainPoint * vec3(21., 2., 14.)) - .5;
+            float nearTurf = (1.-smoothstep(.045,.30,grassPixel)) * (1.-smoothstep(-430.,-410.,terrainPoint.x));
+            detail${i}.rgb *= 1. + nearTurf * (.41*grassTufts + .15*grassTips);
+          ` : ''}
           surveyedPhoto = mix(surveyedPhoto, detail${i}.rgb, blend${i});
         `);
       }

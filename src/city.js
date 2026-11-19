@@ -2,6 +2,9 @@ import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader, DRACO_GLTF_CONFIG } from 'three/addons/loaders/DRACOLoader.js';
 import { surfaceMaterial, waterMaterial } from './materials.js';
+import { applyStreetSurface, makeStreetMaterials, roadLift, streetTiles } from './street.js';
+import { applyDeckSurface, deckTiles, loadDeckMaterial } from './expressway.js';
+import { applyHedgeSurface, hedgeTile } from './hedges.js';
 import { loadParkTrees } from './trees.js';
 import treeLayout from '../tools/tree-layout.json' with { type: 'json' };
 
@@ -206,21 +209,27 @@ async function groundModel(manifest, frame, photo, elevations, overlays, geoid) 
   return { ground, groundHeight, carveWaterbed, land };
 }
 
-function parkSites(groundHeight, heights, surveyedTrees) {
+function parkSites(groundHeight, heights, surveyedTrees, photographedTrees) {
   const tree = new T.Object3D();
-  return treeLayout.flatMap(([x, north, scale, angle], index) => {
+  return [...treeLayout, ...photographedTrees].flatMap(([x, north, scale, angle, estimatedHeight, , area], index) => {
     const overlaps = surveyedTrees.some(([east, y, radius]) => Math.hypot(east - x, y - north) < Math.max(2.1, radius*.8));
     if (overlaps) return [];
     const species = index % 2;
     const modelHeight = species === 0 ? 9.4745 : 9.204;
     const measured = heights[index];
-    const treeHeight = Number.isFinite(measured) ? measured : modelHeight * scale;
+    const treeHeight = measured ?? estimatedHeight ?? modelHeight * scale;
     tree.position.set(x, groundHeight(x, -north), -north);
     tree.scale.set(scale, treeHeight / modelHeight, scale);
     tree.rotation.y = angle;
     tree.updateMatrix();
     const tone = .84 + .16 * (.5 + .5 * Math.sin(index * 2.39996));
     const color = new T.Color(.94*tone, tone, .86*tone);
+    if (area) {
+      const olive = area === 'lawn' ? .64 : .77;
+      color.r *= olive;
+      color.g *= olive * .80;
+      color.b *= olive * .93;
+    }
     const center = tree.position.clone();
     center.y += treeHeight * .52;
     return [{ matrix: tree.matrix.clone(), color, species, center, radius: Math.max(8.8*scale, treeHeight*.64) }];
@@ -228,10 +237,11 @@ function parkSites(groundHeight, heights, surveyedTrees) {
 }
 
 export async function loadCity(progress, anisotropy) {
-  const [manifest, survey, railway] = await Promise.all([
+  const [manifest, survey, railway, parkGround] = await Promise.all([
     fetchAsset('manifest.json', 'json'),
     fetchAsset('survey.json', 'json'),
     fetchAsset('rail-reference.json', 'json'),
+    fetchAsset('park-ground.json', 'json'),
   ]);
   const frame = localFrame(manifest.origin);
   const textureLoader = new T.TextureLoader();
@@ -241,7 +251,7 @@ export async function loadCity(progress, anisotropy) {
   const [archives, basePhoto, photoLayers, elevations, treeHeights] = await Promise.all([
     Promise.all(manifest.archives.map(cityArchive)),
     loadLayer(manifest.photo),
-    Promise.all(survey.photos.map(loadLayer)),
+    Promise.all([parkGround.layer, ...survey.photos].map(loadLayer)),
     Promise.all([...survey.elevations, manifest.elevation].map(loadLayer)),
     fetchAsset(survey.trees.file, 'json'),
   ]);
@@ -249,17 +259,23 @@ export async function loadCity(progress, anisotropy) {
     texture.colorSpace = T.SRGBColorSpace;
     texture.anisotropy = Math.min(12, anisotropy);
   }
-  const overlays = photoLayers.map(({ layer, texture }) => ({ texture, transform: projectedTexture(frame, layer) }));
+  const overlays = photoLayers.map(({ layer, texture }) => ({
+    texture, transform: projectedTexture(frame, layer), parkSurface: layer.file === parkGround.layer.file,
+  }));
   const photo = basePhoto.texture;
   const geoid = railway.verticalDatum.geoidHeight;
   const { ground, groundHeight, carveWaterbed, land } = await groundModel(manifest, frame, photo, elevations, overlays, geoid);
   const draco = new DRACOLoader().setDecoderPath(DRACO_GLTF_CONFIG).setWorkerLimit(6);
   const loader = new GLTFLoader().setDRACOLoader(draco);
-  const park = loadParkTrees(ground, parkSites(groundHeight, treeHeights.heights, manifest.surveyedTrees ?? []), loader);
+  const sites = parkSites(groundHeight, treeHeights.heights, manifest.surveyedTrees ?? [], parkGround.trees);
+  const park = loadParkTrees(ground, sites, loader);
   const root = new T.Group();
   const buildings = new T.Group();
   root.add(ground, buildings);
   const streetTreeScene = await loader.loadAsync('assets/yaesu-street-trees.glb');
+  const deckMaterial = await loadDeckMaterial(textureLoader, anisotropy);
+  const streetMaterials = makeStreetMaterials();
+  const hedgeLeaves = streetTreeScene.scene.getObjectByProperty('isMesh', true).material.map;
   const streetTrees = new Map(streetTreeScene.scene.children.map(group => [group.userData.sourceTile, group]));
   const rail = loader.loadAsync('assets/rail-model.glb').then(gltf => {
     gltf.scene.traverse(object => {
@@ -299,7 +315,6 @@ export async function loadCity(progress, anisotropy) {
         let mapped = false;
         group.traverse(object => {
           if (!object.isMesh) return;
-          triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3;
           object.castShadow = ['building', 'tree', 'bridge', 'furniture'].includes(tile.kind);
           object.receiveShadow = tile.kind !== 'water';
           if (isBuilding) {
@@ -338,11 +353,15 @@ export async function loadCity(progress, anisotropy) {
               object.material = conventional;
             }
             if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
+            if (tile.id in streetTiles) applyStreetSurface(object, tile, streetMaterials);
+            if (tile.id in deckTiles) applyDeckSurface(object, tile, deckMaterial);
+            if (tile.id === hedgeTile) applyHedgeSurface(object, hedgeLeaves);
           }
+          triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3;
         });
         textured += Number(mapped);
         if (tile.kind === 'water') group.position.y += .70;
-        if (tile.kind === 'road') group.position.y += .08;
+        if (tile.kind === 'road') group.position.y += roadLift;
         (isBuilding ? buildings : root).add(group);
       } catch (error) {
         failures.push(tile.id);
