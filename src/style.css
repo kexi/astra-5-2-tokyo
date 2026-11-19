@@ -1,73 +1,303 @@
 :root {
   color-scheme: dark;
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   color: #fff8eb;
   background: #131d22;
 }
-* { box-sizing: border-box; }
-body { margin: 0; }
-.stage { position: relative; min-height: 100svh; overflow: hidden; isolation: isolate; background: #131d22 url("../output/tokyo-station.jpg") center / cover no-repeat; }
-#view { display: block; position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
-.stage:has(#loading:not([hidden])) #view { visibility: hidden; }
-.stage::after, .film-shade {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.stage {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #131d22 url('../output/tokyo-station.jpg') center / cover no-repeat;
+}
+#view {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.stage:has(#loading:not([hidden])) #view {
+  visibility: hidden;
+}
+.stage::after,
+.film-shade {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
   background: linear-gradient(180deg, #0b141bb0, transparent 31%, transparent 64%, #0b141bf5);
 }
-.mast, .telemetry, .flight-panel { position: absolute; z-index: 2; }
-.mast { top: clamp(20px, 4.7vh, 52px); left: clamp(18px, 4vw, 66px); pointer-events: none; }
-.coordinates { color: #ffdc9a; font: 600 11px/1.4 ui-monospace, monospace; letter-spacing: .15em; }
-h1 { margin: 12px 0 4px; font-size: clamp(38px, 6vw, 85px); font-weight: 650; letter-spacing: -.075em; line-height: 1.1; }
-.subheading { color: #fff1db; margin: 9px 0; font: 500 clamp(11px, 1.25vw, 16px)/1.4 ui-monospace, monospace; letter-spacing: .12em; }
-.telemetry {
-  top: clamp(28px, 6vh, 64px); right: clamp(18px, 4vw, 66px); display: flex; align-items: center; gap: 9px;
-  color: #ffdc9a; font: 500 11px/1.55 ui-monospace, monospace; text-align: right;
-}
-.telemetry span { display: block; }
-#needle { transform-origin: 13px 13px; }
-#loading {
-  position: absolute; z-index: 3; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  display: grid; gap: 12px; min-width: 200px; padding: 16px 22px; background: #131d22ed; border-radius: 7px;
-  color: #fff0d6; font-size: 13px;
-}
-[hidden] { display: none !important; }
-progress { width: 100%; accent-color: #f1c075; }
+.mast,
+.telemetry,
 .flight-panel {
-  left: clamp(14px, 4vw, 66px); right: clamp(14px, 4vw, 66px); bottom: clamp(12px, 3vh, 30px);
-  max-width: 1350px; margin-inline: auto;
+  position: absolute;
+  z-index: 2;
+}
+.mast {
+  top: clamp(20px, 4.7vh, 52px);
+  left: clamp(18px, 4vw, 66px);
+  pointer-events: none;
+}
+.coordinates {
+  color: #ffdc9a;
+  font:
+    600 11px/1.4 ui-monospace,
+    monospace;
+  letter-spacing: 0.15em;
+}
+h1 {
+  margin: 12px 0 4px;
+  font-size: clamp(38px, 6vw, 85px);
+  font-weight: 650;
+  letter-spacing: -0.075em;
+  line-height: 1.1;
+}
+.subheading {
+  color: #fff1db;
+  margin: 9px 0;
+  font:
+    500 clamp(11px, 1.25vw, 16px)/1.4 ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+.telemetry {
+  top: clamp(28px, 6vh, 64px);
+  right: clamp(18px, 4vw, 66px);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #ffdc9a;
+  font:
+    500 11px/1.55 ui-monospace,
+    monospace;
+  text-align: right;
+}
+.telemetry span {
+  display: block;
+}
+#needle {
+  transform-origin: 13px 13px;
+}
+#loading {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 12px;
+  min-width: 200px;
+  padding: 16px 22px;
+  background: #131d22ed;
+  border-radius: 7px;
+  color: #fff0d6;
+  font-size: 13px;
+}
+[hidden] {
+  display: none !important;
+}
+progress {
+  width: 100%;
+  accent-color: #f1c075;
+}
+.flight-panel {
+  left: clamp(14px, 4vw, 66px);
+  right: clamp(14px, 4vw, 66px);
+  bottom: clamp(12px, 3vh, 30px);
+  max-width: 1350px;
+  margin-inline: auto;
 }
 .transport {
-  display: flex; align-items: center; gap: clamp(8px, 1.4vw, 22px); padding: clamp(9px, 1.2vw, 16px);
-  border: 1px solid #f0dfb754; border-radius: 8px; background: #121d23dd;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 22px);
+  padding: clamp(9px, 1.2vw, 16px);
+  border: 1px solid #f0dfb754;
+  border-radius: 8px;
+  background: #121d23dd;
 }
 button {
-  font: inherit; font-weight: 650; font-size: .8rem; border: 1px solid #f9e8be66;
-  border-radius: 5px; padding: 10px 13px; min-height: 43px; color: #fff2dc; background: #253137; cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.8rem;
+  border: 1px solid #f9e8be66;
+  border-radius: 5px;
+  padding: 10px 13px;
+  min-height: 43px;
+  color: #fff2dc;
+  background: #253137;
+  cursor: pointer;
 }
-button:hover { background: #3b4649; }
-button:disabled { opacity: .5; cursor: wait; }
-#play { background: #f0ca89; color: #22241e; border-color: #f0ca89; }
-#play:hover { background: #ffe0aa; }
-button[aria-pressed="true"] { border-color: #f0ca89; color: #ffdfa3; }
-:focus-visible { outline: 2px solid #f9d18b; outline-offset: 4px; }
-.timeline { flex: 1; min-width: 0; }
-.track-info { display: flex; justify-content: space-between; gap: 6px; font-size: .74rem; margin-bottom: 4px; }
-output { font: 500 .70rem/1.5 ui-monospace, monospace; white-space: nowrap; color: #fbdb9c; }
-input[type="range"] { display: block; width: 100%; margin: 0; accent-color: #f0ca89; min-height: 22px; cursor: pointer; }
-.footnote { display: flex; justify-content: space-between; gap: 8px 20px; flex-wrap: wrap; padding: 11px 2px 0; color: #e4ddcb; font-size: 11px; }
-.footnote p { margin: 0; }
-.film-link { display: inline-block; margin-right: 14px; color: #ffdc9a !important; }
-.footnote a { color: inherit; text-underline-offset: 3px; }
-#film-title, #film-credit, .film-shade { display: none; }
-.capture .mast, .capture .flight-panel, .capture .telemetry, .capture .stage::after { display: none; }
-.capture.cinema #film-title, .capture.cinema #film-credit, .capture.cinema .film-shade { display: block; }
-.film-shade { background: linear-gradient(180deg, transparent 70%, #10171b80 100%); z-index: 1; }
-#film-title, #film-credit { position: absolute; z-index: 2; left: 5.5%; bottom: 12%; color: #fff6df; text-shadow: 0 2px 15px #16201fbb; pointer-events: none; }
-#film-title p { font: 600 1.25vw/1 ui-monospace, monospace; color: #ffdb96; letter-spacing: .26em; margin: 0 0 1.3vw; }
-#film-title strong { font-size: 5.6vw; font-weight: 650; letter-spacing: -.07em; line-height: 1; }
-#film-credit { font-size: 1.12vw; bottom: 5.8%; color: #fff6e8; }
+button:hover {
+  background: #3b4649;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+#play {
+  background: #f0ca89;
+  color: #22241e;
+  border-color: #f0ca89;
+}
+#play:hover {
+  background: #ffe0aa;
+}
+button[aria-pressed='true'] {
+  border-color: #f0ca89;
+  color: #ffdfa3;
+}
+:focus-visible {
+  outline: 2px solid #f9d18b;
+  outline-offset: 4px;
+}
+.timeline {
+  flex: 1;
+  min-width: 0;
+}
+.track-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.74rem;
+  margin-bottom: 4px;
+}
+output {
+  font:
+    500 0.7rem/1.5 ui-monospace,
+    monospace;
+  white-space: nowrap;
+  color: #fbdb9c;
+}
+input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 0;
+  accent-color: #f0ca89;
+  min-height: 22px;
+  cursor: pointer;
+}
+.footnote {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px 20px;
+  flex-wrap: wrap;
+  padding: 11px 2px 0;
+  color: #e4ddcb;
+  font-size: 11px;
+}
+.footnote p {
+  margin: 0;
+}
+.film-link {
+  display: inline-block;
+  margin-right: 14px;
+  color: #ffdc9a !important;
+}
+.footnote a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+.study-controls {
+  flex-wrap: wrap;
+}
+.study-controls label,
+.study-controls a {
+  color: #ffdfa3;
+  font-size: 0.8rem;
+}
+.study-controls select {
+  min-height: 43px;
+  max-width: 100%;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 0.82rem;
+}
+.model-study .stage {
+  background: #243038;
+}
+.model-study .mast h1 {
+  font-size: clamp(27px, 4.5vw, 60px);
+}
+.model-study .transport {
+  display: flex;
+}
+.model-study .stage::after {
+  background: linear-gradient(180deg, #0b141b88, transparent 20%, transparent 77%, #10191ea0);
+}
+#film-title,
+#film-credit,
+.film-shade {
+  display: none;
+}
+.capture .mast,
+.capture .flight-panel,
+.capture .telemetry,
+.capture .stage::after {
+  display: none;
+}
+.capture.cinema #film-title,
+.capture.cinema #film-credit,
+.capture.cinema .film-shade {
+  display: block;
+}
+.film-shade {
+  background: linear-gradient(180deg, transparent 70%, #10171b80 100%);
+  z-index: 1;
+}
+#film-title,
+#film-credit {
+  position: absolute;
+  z-index: 2;
+  left: 5.5%;
+  bottom: 12%;
+  color: #fff6df;
+  text-shadow: 0 2px 15px #16201fbb;
+  pointer-events: none;
+}
+#film-title p {
+  font:
+    600 1.25vw/1 ui-monospace,
+    monospace;
+  color: #ffdb96;
+  letter-spacing: 0.26em;
+  margin: 0 0 1.3vw;
+}
+#film-title strong {
+  font-size: 5.6vw;
+  font-weight: 650;
+  letter-spacing: -0.07em;
+  line-height: 1;
+}
+#film-credit {
+  font-size: 1.12vw;
+  bottom: 5.8%;
+  color: #fff6e8;
+}
 @media (max-width: 620px) {
-  .transport { display: grid; grid-template-columns: 1fr 1fr auto; }
-  .timeline { grid-column: 1 / -1; grid-row: 1; }
-  .footnote { font-size: 10px; }
-  .telemetry { top: 20px; }
+  .transport {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+  }
+  .timeline {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .footnote {
+    font-size: 10px;
+  }
+  .telemetry {
+    top: 20px;
+  }
 }

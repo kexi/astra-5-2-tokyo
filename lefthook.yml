@@ -1,6 +1,12 @@
 pre-commit:
   parallel: true
   commands:
+    python:
+      glob: "{tools/*.py,ruff.toml}"
+      run: just check-python
+    web:
+      glob: "*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,css,html,json}"
+      run: just check-web
     just-format:
       glob: "Justfile"
       run: just --fmt --check

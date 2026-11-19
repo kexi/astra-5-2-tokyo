@@ -1,5 +1,9 @@
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.13,<3.14"
+# dependencies = []
+#
+# [tool.blender]
+# version = "5.2"
 # ///
 """Build the editable, georeferenced Tokyo Station scene using Blender's Python."""
 
@@ -561,7 +565,7 @@ def setup_cameras(scene, path):
     return camera
 
 
-def main():
+def main(argv=None, *, empty_scene=False):
     args = argparse.ArgumentParser()
     args.add_argument("--flight", type=Path, required=True)
     args.add_argument(
@@ -571,8 +575,16 @@ def main():
     args.add_argument("--preview", type=Path)
     args.add_argument("--preview-frame", type=int, default=470)
     args.add_argument("--width", type=int, default=1920)
-    params = args.parse_args(sys.argv[sys.argv.index("--") + 1 :])
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+    args.add_argument(
+        "--export-buildings", type=Path, help="Write the 22-building web GLB"
+    )
+    params = args.parse_args(
+        argv if argv is not None else sys.argv[sys.argv.index("--") + 1 :]
+    )
+    if not empty_scene:
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+    elif bpy.context.scene.objects or bpy.data.filepath:
+        raise RuntimeError("The MCP build requires its own empty Blender instance")
     scene = bpy.context.scene
     scene.name = "東京駅上空・PLATEAU 2025"
     scene.unit_settings.system = "METRIC"
@@ -608,7 +620,9 @@ def main():
     height = dem_sample(
         manifest, project, survey["elevations"], loaded_image, array_image, geoid
     )
-    overlays = world_photos([park_ground["layer"], *survey["photos"]], project, loaded_image)
+    overlays = world_photos(
+        [park_ground["layer"], *survey["photos"]], project, loaded_image
+    )
     waters = import_city(manifest, placement, photo, project, params.crop, overlays)
     mesh_from_ground(
         collection("00  地理院と東京都・地形"),
@@ -635,6 +649,21 @@ def main():
     )
     reference_curves(scene, railway, height)
     import_rail_model(scene, ASSETS / "rail-model.glb")
+    from blender_omy import (
+        export_buildings,
+        extract_buildings,
+        import_model,
+        save_study,
+    )
+
+    landmarks = collection("10  大丸有・建物別の外装写真")
+    extract_buildings(scene, landmarks)
+    if params.export_buildings:
+        export_buildings(landmarks, params.export_buildings)
+    rooftop = collection("10  丸の内二丁目ビル・測量による外装")
+    basement = collection("11  東京駅周辺地下街・LOD4")
+    import_model(scene, rooftop, ASSETS / "marunouchi-nichome.glb")
+    import_model(scene, basement, ASSETS / "omy-underground.glb")
     credits = bpy.data.texts.new("出典と座標")
     credits.write(
         "東京駅上空\nProject PLATEAU 2025年度 千代田区・中央区・港区を加工\n"
@@ -651,6 +680,13 @@ def main():
         "BlenderのXは東、Yは北、Zは高さ（メートル）\n"
     )
     scene.frame_set(params.preview_frame)
+    for source in (
+        "OMY-SOURCES.md",
+        "OMY-FACADE-REPAIRS.md",
+        "MARUNOUCHI-SOURCES.md",
+        "OMY-UNDERGROUND-SOURCES.md",
+    ):
+        credits.write("\n" + (ASSETS / source).read_text() + "\n")
     for screen in bpy.data.screens:
         for area in screen.areas:
             if area.type == "VIEW_3D":
@@ -659,6 +695,13 @@ def main():
                 area.spaces.active.shading.color_type = "TEXTURE"
     bpy.ops.file.pack_all()
     params.output.parent.mkdir(parents=True, exist_ok=True)
+    if not params.crop:
+        save_study(
+            scene,
+            (landmarks, rooftop, basement),
+            credits,
+            params.output.with_name("omy-architecture.blend"),
+        )
     bpy.ops.wm.save_as_mainfile(filepath=str(params.output), compress=True)
     if params.preview:
         scene.render.filepath = str(params.preview)

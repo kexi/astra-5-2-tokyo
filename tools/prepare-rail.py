@@ -1,5 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
+# dependencies = []
 # ///
 """Extract surveyed railway references and OSM track centerlines around Tokyo Station."""
 

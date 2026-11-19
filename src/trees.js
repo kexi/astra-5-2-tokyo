@@ -20,21 +20,30 @@ function specimenMaterial(isLeaf, level, clock) {
   const material = surfaceMaterial(isLeaf ? 'leaf' : 'trunk');
   material.color.set(isLeaf ? '#809a56' : '#786553');
   material.vertexColors = isLeaf;
-  material.roughness = isLeaf ? .61 : .92;
+  material.roughness = isLeaf ? 0.61 : 0.92;
   const compileSurface = material.onBeforeCompile;
-  const previous = levels[levels.indexOf(level)-1];
-  material.onBeforeCompile = shader => {
+  const previous = levels[levels.indexOf(level) - 1];
+  material.onBeforeCompile = (shader) => {
     compileSurface(shader);
     shader.uniforms.treeTime = clock;
-    shader.uniforms.lodRange = { value: new T.Vector4(
-      level.enter, previous?.feather ?? 0, Number.isFinite(level.leave) ? level.leave : 1e6, level.feather,
-    ) };
-    shader.vertexShader = `
+    shader.uniforms.lodRange = {
+      value: new T.Vector4(
+        level.enter,
+        previous?.feather ?? 0,
+        Number.isFinite(level.leave) ? level.leave : 1e6,
+        level.feather,
+      ),
+    };
+    shader.vertexShader =
+      `
       varying vec3 treePoint;
       varying vec2 bladeUV;
       varying float treeDistance;
       uniform float treeTime;
-    ` + shader.vertexShader.replace('#include <begin_vertex>', `
+    ` +
+      shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
       #include <begin_vertex>
       treePoint = position;
       bladeUV = uv;
@@ -45,19 +54,26 @@ function specimenMaterial(isLeaf, level, clock) {
       transformed.x += flexibility*(.085*sin(gust)+.037*sin(gust*1.83+position.z*.68));
       transformed.z += flexibility*.051*cos(gust*.77+position.x*.31);
       ${isLeaf ? `transformed.y += .027*bladeUV.y*sin(treeTime*3.1+1.87*treePoint.x+.87*treePoint.z);` : ''}
-    `);
-    shader.fragmentShader = `
+    `,
+      );
+    shader.fragmentShader =
+      `
       varying vec3 treePoint;
       varying vec2 bladeUV;
       varying float treeDistance;
       uniform vec4 lodRange;
       ${screenNoise}
-    ` + shader.fragmentShader.replace('#include <color_fragment>', `
+    ` +
+      shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        `
       #include <color_fragment>
       float dither = screenNoise();
       if (lodRange.y > 0. && dither >= smoothstep(lodRange.x-lodRange.y,lodRange.x+lodRange.y,treeDistance)) discard;
       if (lodRange.w > 0. && dither < smoothstep(lodRange.z-lodRange.w,lodRange.z+lodRange.w,treeDistance)) discard;
-      ${isLeaf ? `
+      ${
+        isLeaf
+          ? `
         float across = abs(2.*bladeUV.x-1.);
         float width = max(fwidth(across),.014);
         float midrib = 1.-smoothstep(.014-width,.034+width,across);
@@ -65,21 +81,27 @@ function specimenMaterial(isLeaf, level, clock) {
         float vein = (1.-smoothstep(.04,.19+fwidth(veins),veins))*(1.-across*across);
         float resolved = 1.-smoothstep(.025,.14,length(fwidth(bladeUV)));
         diffuseColor.rgb *= .94 + resolved*(.29*midrib+.11*vein);
-      ` : `
+      `
+          : `
         float angle = atan(treePoint.z, treePoint.x);
         float split = sin(53.*angle + 3.*sin(13.*angle + treePoint.y*1.57)
                          + 1.6*sin(5.*treePoint.y + angle*7.));
         float resolved = 1.-smoothstep(.015,.075,length(fwidth(treePoint)));
         diffuseColor.rgb *= 1.-.33*smoothstep(.42,.91,split)*resolved;
-      `}
-    `);
+      `
+      }
+    `,
+      );
     if (isLeaf) {
-      shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <opaque_fragment>',
+        `
         vec3 toEye = normalize(cameraPosition-terrainPoint);
         float againstSun = pow(max(dot(-toEye,sunDirection),0.),3.2);
         float edge = 1.-abs(dot(normal,normalize(vViewPosition)));
         outgoingLight += diffuseColor.rgb * vec3(1.36,1.12,.54) * againstSun * (.33+.58*edge);
-        #include <opaque_fragment>`);
+        #include <opaque_fragment>`,
+      );
     }
   };
   material.customProgramCacheKey = () => `park-${level.name}-${isLeaf ? 'leaf' : 'bark'}`;
@@ -92,8 +114,12 @@ function atlasMaterial(texture, live, level) {
     lights: true,
     uniforms: {
       ...T.UniformsUtils.clone(T.UniformsLib.lights),
-      canopyMap: { value: texture }, live, fadeStart: { value: level.leave-level.feather },
-      fadeEnd: { value: level.leave+level.feather }, sunDirection: { value: sun }, mist: { value: mist },
+      canopyMap: { value: texture },
+      live,
+      fadeStart: { value: level.leave - level.feather },
+      fadeEnd: { value: level.leave + level.feather },
+      sunDirection: { value: sun },
+      mist: { value: mist },
     },
     vertexShader: `
       #include <common>
@@ -170,14 +196,17 @@ function atlasMaterial(texture, live, level) {
 }
 
 export async function loadParkTrees(parent, sites, loader) {
-  const clock = { value: 0 }, live = { value: 0 };
-  const makeBatch = async level => {
+  const clock = { value: 0 },
+    live = { value: 0 };
+  const makeBatch = async (level) => {
     const gltf = await loader.loadAsync(`assets/park-trees-${level.name}.glb`);
     const bySpecies = species.map(() => []);
     for (const object of gltf.scene.children) {
-      const speciesIndex = species.findIndex(name => object.name.startsWith(name));
+      const speciesIndex = species.findIndex((name) => object.name.startsWith(name));
       const shadow = level.name === 'horizon';
-      const material = shadow ? new T.MeshBasicMaterial() : specimenMaterial(object.name.endsWith('Foliage'), level, clock);
+      const material = shadow
+        ? new T.MeshBasicMaterial()
+        : specimenMaterial(object.name.endsWith('Foliage'), level, clock);
       const instances = new T.InstancedMesh(object.geometry, material, sites.length);
       instances.name = object.name;
       instances.instanceMatrix.setUsage(T.DynamicDrawUsage);
@@ -191,9 +220,15 @@ export async function loadParkTrees(parent, sites, loader) {
     }
     return bySpecies;
   };
-  const atlas = async name => {
-    const texture = await new T.TextureLoader().loadAsync(`assets/park-foliage-${name.toLowerCase()}.png`);
-    const mesh = new T.InstancedMesh(new T.PlaneGeometry(1,1),atlasMaterial(texture,live,levels[1]),sites.length);
+  const atlas = async (name) => {
+    const texture = await new T.TextureLoader().loadAsync(
+      `assets/park-foliage-${name.toLowerCase()}.png`,
+    );
+    const mesh = new T.InstancedMesh(
+      new T.PlaneGeometry(1, 1),
+      atlasMaterial(texture, live, levels[1]),
+      sites.length,
+    );
     mesh.name = `${name} | baked leaf silhouette`;
     mesh.receiveShadow = true;
     mesh.count = 0;
@@ -202,46 +237,51 @@ export async function loadParkTrees(parent, sites, loader) {
     return [mesh];
   };
   const [batches, shadows, distant] = await Promise.all([
-    Promise.all(levels.map(makeBatch)), makeBatch({name:'horizon'}), Promise.all(species.map(atlas)),
+    Promise.all(levels.map(makeBatch)),
+    makeBatch({ name: 'horizon' }),
+    Promise.all(species.map(atlas)),
   ]);
   const projection = new T.Matrix4();
   const frustum = new T.Frustum();
   const bounds = new T.Sphere();
-  const previousPosition = new T.Vector3(Infinity,Infinity,Infinity);
+  const previousPosition = new T.Vector3(Infinity, Infinity, Infinity);
   const previousDirection = new T.Quaternion();
   let previousFov = -1;
   let previousAspect = -1;
   const drawSite = (groups, site) => {
     for (const mesh of groups[site.species]) {
-      mesh.setMatrixAt(mesh.count,site.matrix);
-      mesh.setColorAt(mesh.count,site.color);
+      mesh.setMatrixAt(mesh.count, site.matrix);
+      mesh.setColorAt(mesh.count, site.color);
       mesh.count++;
     }
   };
-  const flush = groups => {
-    for (const pair of groups) for (const mesh of pair) {
-      mesh.instanceMatrix.needsUpdate = true;
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    }
+  const flush = (groups) => {
+    for (const pair of groups)
+      for (const mesh of pair) {
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      }
   };
   for (const site of sites) {
-    drawSite(shadows,site);
-    drawSite(distant,site);
+    drawSite(shadows, site);
+    drawSite(distant, site);
   }
   flush(shadows);
   flush(distant);
   function update(camera, seconds) {
     clock.value = seconds;
     live.value = 1;
-    const sameView = previousPosition.distanceToSquared(camera.position) < .0625 &&
-      previousDirection.angleTo(camera.quaternion) < .012 &&
-      previousFov === camera.fov && previousAspect === camera.aspect;
+    const sameView =
+      previousPosition.distanceToSquared(camera.position) < 0.0625 &&
+      previousDirection.angleTo(camera.quaternion) < 0.012 &&
+      previousFov === camera.fov &&
+      previousAspect === camera.aspect;
     if (sameView) return;
     previousPosition.copy(camera.position);
     previousDirection.copy(camera.quaternion);
     previousFov = camera.fov;
     previousAspect = camera.aspect;
-    projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
+    projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(projection);
     for (const bySpecies of batches) {
       for (const pair of bySpecies) for (const mesh of pair) mesh.count = 0;
@@ -252,10 +292,11 @@ export async function loadParkTrees(parent, sites, loader) {
       bounds.center.copy(site.center);
       bounds.radius = site.radius;
       if (!frustum.intersectsSphere(bounds)) continue;
-      for (let i=0; i<levels.length; i++) {
+      for (let i = 0; i < levels.length; i++) {
         const level = levels[i];
-        const overlap = (levels[i-1]?.feather ?? 0) + 3;
-        if (metres >= level.enter-overlap && metres <= level.leave+level.feather+3) drawSite(batches[i],site);
+        const overlap = (levels[i - 1]?.feather ?? 0) + 3;
+        if (metres >= level.enter - overlap && metres <= level.leave + level.feather + 3)
+          drawSite(batches[i], site);
       }
     }
     for (const bySpecies of batches) flush(bySpecies);

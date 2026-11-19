@@ -6,6 +6,8 @@ PLATEAUの2025年度3D都市モデルを使い、東京駅・丸の内・八重�
 - [空撮動画（MP4）](output/tokyo-station.mp4)
 - [360°レビュー](review/README.md)
 - [建物23,115件のLODと画像テクスチャ](review/building-textures.md)
+- [大丸有22棟の外装を棟別に見る](https://kexi.github.io/astra-5-2-tokyo/?model=buildings) ・ [東京駅周辺地下街の断面を見る](https://kexi.github.io/astra-5-2-tokyo/?model=underground)
+- [22棟・屋上設備・地下街の編集用Blenderファイル](https://kexi.github.io/astra-5-2-tokyo/output/omy-architecture.blend)
 
 画面下部の「空撮を再生」でカメラルートを再生できます。「360° 見回す」に切り替えると、ドラッグで回転、スクロールでズームできます。ボタンにフォーカスを置いた状態では、矢印キーで方位と俯角を変更できます。フレアの表示は切り替えられます。
 
@@ -19,11 +21,21 @@ pnpm run build
 python3 -m http.server 8421 --bind 127.0.0.1 --directory dist
 ```
 
-ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。初回表示では地形・建物テクスチャを含む約170 MiBのデータを読み込みます。
+ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。空撮を開くと地形・建物テクスチャを含む約187 MiBを読み込みます。棟別の外装と地下街は、それぞれ専用ページから直接開けます。
+
+### ローカルチェック
+
+Webコードは `just format-web` で整形し、`just check-web` でOxfmtとOxlintの両方を実行できます。依存パッケージの導入後は、`just check` でCIと同じ検査を実行できます。
 
 ## Blenderで編集する
 
-Blender 5.2で `just build-blender` を実行すると、`output/tokyo-station.blend` が生成されます。Blenderの場所は `BLENDER_BIN` で指定できます。写真テクスチャはプロジェクトに同梱され、建物・道路・水域・樹木・橋梁・街路設備・軌道をコレクション別に編集できます。タイムラインには空撮7カットのカメラとマーカーがあります。
+Blender 5.2で `just build-blender` を実行すると、都市全体の `output/tokyo-station.blend` と、大丸有の建物・地下街を抜き出した `output/omy-architecture.blend` が生成されます。Blenderの場所は `BLENDER_BIN` で指定できます。写真テクスチャはプロジェクトに同梱され、建物・道路・水域・樹木・橋梁・街路設備・軌道をコレクション別に編集できます。都市全体のタイムラインには空撮8カットのカメラとマーカーがあります。
+
+三菱地所設計の公開事例図に載る22物件の主棟を公開PLATEAU形状と照合し、建物ごとに独立したメッシュと編集用の外装写真アトラスを作成しました。丸の内二丁目ビルの屋上と上層外壁には、東京都の航空レーザ点群や同一建物の画像から再構成した設備と窓を追加しています。地下街は国交省の2023年度実証で公開されたLOD4.0の地物を取り込みました。床と壁は元データの形状に合わせ、推定仕上げのPBRテクスチャを貼っています。[データ出典・加工範囲と利用条件](assets/OMY-SOURCES.md)
+
+Blender LabのMCP拡張と `blender-mcp` がインストールされている環境では、`just build-blender-mcp` で同じ成果物をMCP経由で生成できます。作品専用のバックグラウンドプロセスを起動し、ローカルで作成・保存して終了します。
+
+データ取得とMCPクライアントは、各スクリプトのPEP 723メタデータを使って `uv run` で起動します。Blender内で動く制作スクリプトは同梱のPython 3.13、`bpy`、NumPyを使用します。Python全体のリントと整形は `just check-python` で検査できます。
 
 ケヤキとクスノキをもとにした木は、根張り、幹、枝、立体の葉を作成しました。葉脈、樹皮、逆光の透過、葉と枝の風揺れをBlenderのノードとシェイプキーで調整できます。Three.jsでも同じBlenderの形状を読み込み、遠くの木は撮影角度別の画像を使って表示します。窓の反射にはPLATEAUの外壁写真から推定した窓面を使います。
 
@@ -34,9 +46,11 @@ PLATEAUの独立木98本は、元データの位置、樹高、樹冠の幅を�
 ```sh
 just review
 just render
+node tools/render.mjs buildings /tmp/tokyo-buildings
+node tools/render.mjs underground /tmp/tokyo-underground
 ```
 
-撮影にはChromeとFFmpegを使用します。Chromeの場所は `CHROME_BIN` で指定できます。レビューは北から時計回りに45°間隔で周回し、低高度4方位、俯瞰、濠、草、フレア比較、空撮ルートの静止画を保存します。動画はBlenderで制作した樹木を読み込んだThree.jsシーンから、39.5秒の1080p・30 fpsのH.264 MP4として書き出します。
+撮影にはChromeとFFmpegを使用します。Chromeの場所は `CHROME_BIN` で指定できます。レビューは北から時計回りに45°間隔で周回し、低高度4方位、俯瞰、濠、草、フレア比較、空撮ルートの静止画を保存します。動画はBlenderで編集した22棟の外装と屋上設備、樹木を読み込んだThree.jsシーンから、39.5秒の1080p・30 fpsのH.264 MP4として書き出します。
 
 都市データを再取得する手順です。鉄道参照データの取得後に、航空レーザと照合して軌道を生成します。
 

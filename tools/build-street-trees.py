@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.13,<3.14"
+# dependencies = []
+#
+# [tool.blender]
+# version = "5.2"
+# ///
 """Model the surveyed Yaesu street trees in Blender, from each original PLATEAU batch."""
 
 import gzip

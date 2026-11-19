@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "vendor/",
+    "assets/",
+    "dist/",
+    "output/",
+    "review/",
+    "tools/tree-layout.json",
+    "**/*.md",
+    "**/*.toml",
+    "**/*.yml",
+    "**/*.yaml"
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "source": "UC23-05 東京駅周辺地下街LOD4.0（国土交通省、JR東日本コンサルタンツ株式会社）",
+  "sourceUrl": "https://assets.cms.plateau.reearth.io/assets/f9/3d8356-9c45-4096-96b5-b52b02a166a4/13101_chiyoda-ku_ubld-mlit_2023_citygml_1_op.zip",
+  "archiveSha256": "4f5bca373ea63ac2487cd0170d82a1a691e160d9e49c317684cb0743f56f5682",
+  "citygml": "udx/ubld/53394611_ubld_6697_op.gml",
+  "license": "CC BY 4.0",
+  "sourceCrs": "EPSG:6697 (JGD2011 latitude, longitude, orthometric height)",
+  "originLonLatEllipsoidM": [
+    139.7661,
+    35.68117,
+    40.0
+  ],
+  "geoidHeightM": 36.7647,
+  "gltfAxes": [
+    "east",
+    "up",
+    "south"
+  ],
+  "registration": {
+    "rotationDegrees": 79.28742872571175,
+    "translationEastNorth": [
+      -927.4663854700156,
+      -817.8099075573764
+    ]
+  },
+  "appearance": "The CityGML contains no Appearance, photographs or measured finishes. Display colours indicate feature classes. Estimated floor and wall finishes use embedded, repeating base colour, normal and metallic-roughness PNGs and world-aligned UVs.",
+  "illustrativeFinishes": {
+    "texturePeriodM": 1.2,
+    "floorTileM": [
+      0.6,
+      0.6
+    ],
+    "wallTileM": [
+      0.6,
+      0.3
+    ],
+    "tileDimensionsMeasured": false
+  },
+  "lod": "4.0",
+  "boundsGltfYUp": [
+    [
+      -798.2560424804688,
+      -30.545001983642578,
+      -814.0890502929688
+    ],
+    [
+      388.593017578125,
+      3.062000036239624,
+      1118.3651123046875
+    ]
+  ],
+  "statistics": {
+    "polygons": 772226,
+    "holedPolygons": 90,
+    "zeroAreaPolygons": 727,
+    "rooms": 736,
+    "triangles": 957947,
+    "vertices": 622947,
+    "texturedTriangles": 161771,
+    "meshNodes": 174,
+    "sourceFeatureCount": 28229
+  },
+  "storeys": {
+    "grp_7d45cab6-8891-4766-9fd6-676885696737": "B4F_半蔵門線大手町駅ホーム（仮）",
+    "grp_40e09d9b-4388-483d-986a-d0fccd846584": "B2F_丸の内線銀座駅ホーム（仮）",
+    "grp_4a13e2a6-db0b-4eb9-b3b5-1842e001b1c3": "B1F_半蔵門線大手町駅コンコース（仮）",
+    "grp_08fda8a0-cd2c-476b-96aa-f734145a51ea": "B2F_丸の内線大手町駅ホーム（仮）",
+    "grp_2e1e362b-2880-48cb-b8b7-a8ee9865906a": "B2F_丸の内線東京駅ホーム（仮）",
+    "grp_6e663768-b07d-4692-a82f-759f8d10449e": "B1F_丸の内線銀座駅コンコース（仮）",
+    "grp_cd4a19a0-50c9-49e3-beab-f5515cc0f840": "JR東京駅コンコース地下1階（TP-4,130）",
+    "grp_7935e064-d4c5-457c-8bde-4e84d7f3a2a9": "Temp",
+    "grp_c9a88138-20bf-4f12-af26-9b588bc38bcc": "B1F_丸の内線東京駅コンコース（仮）",
+    "grp_7a18561c-495b-40e1-98ff-a6797b9e7de5": "B1F_丸の内線大手町コンコース（仮）",
+    "grp_492d6f13-62f3-4f1a-abd9-f4380152f406": "TP",
+    "grp_b9d8e550-7b68-4fda-bacc-f249493d994b": "B1F_丸の内線大手町コンコース（仮）+1,500",
+    "grp_432a6084-ff7c-40e3-866f-c4e4e2aee0f8": "B1F_行幸地下ギャラリー（TP+150）",
+    "grp_88d89a30-3911-4e37-bb5f-3501df7b9400": "中央口コンコース（TP+2,000）",
+    "grp_64734e1f-e9ca-4e53-a826-67cfc83c84e7": "フォーラム口・日比谷口コンコース（TP+2,160）",
+    "grp_9d46a32e-32aa-48cf-bb01-590822758698": "JR東京駅丸の内口（TP+3,250）",
+    "grp_527e9afd-6be0-4fcb-a3c2-40a5342721d2": "B2F_銀座線銀座駅ホーム（仮）",
+    "grp_f92b2bf4-ce02-4ad6-a242-821b8c00264d": "B1F_日比谷線日比谷駅コンコース（仮）+1500",
+    "grp_2886484a-6a57-45ef-92a7-b3c833cdb2ba": "B1F_有楽町線有楽町駅コンコース-2,560",
+    "grp_280c992d-66ec-4e12-b61a-02bce284f0f8": "B1F_有楽町線有楽町駅コンコース（仮）",
+    "grp_46726eb4-5fad-44f6-a99f-0c89dc81409d": "B1F_有楽町線銀座一丁目駅連絡通路（仮）",
+    "grp_ac6c49c8-651f-49a7-a21f-45bd3c673c7f": "B1F_千代田線日比谷駅コンコース（仮）",
+    "grp_f5cbc76b-b8df-4f5b-8423-81b31eaf6af8": "B1F_三田線日比谷駅コンコース（仮）",
+    "grp_192dcda7-3422-4def-80f7-8f884b1b25c4": "TP",
+    "grp_43cbf3b3-a6ec-4c7c-a293-f9f2d8b49a46": "B1F_半蔵門線大手町駅コンコース（仮）",
+    "grp_f9b3c359-933c-46b8-bfd4-fd5dc7da9892": "B2F_東西線大手町連絡通路・コンコース（仮）",
+    "grp_a1310014-9192-4fe6-8771-5774d70dc0ef": "Below B3F",
+    "grp_48a2dcbc-15df-4c7a-9804-a7bddaf1993c": "B1F_東西線大手町連絡通路（仮）",
+    "grp_4e2fa08d-43ea-42ad-a457-493775a04236": "B1F_千代田線大手町駅コンコース・半蔵門線連絡通路（仮）",
+    "grp_5add8fa0-dcc8-457c-9047-7d761ec03e73": "東京駅コンコース地下1階（TP-4,130）",
+    "grp_01131d77-488b-46e2-ae00-df0b3aa6a32a": "B1F_千代田線大手町駅コンコース・半蔵門線連絡通路（仮）+3,000",
+    "grp_b633fa74-b327-494b-a2d6-181847bba5a0": "B1F_三田線大手町駅コンコース・千代田線連絡通路（仮）",
+    "grp_29c467f5-e35d-45bb-980d-4f4607398d90": "B1F_千代田線日比谷駅コンコース（仮）",
+    "grp_2ba45cd9-9741-4a0c-9b92-db4927ea4fb8": "B1F_三田線日比谷駅コンコース（仮）",
+    "grp_f6c49bc1-691e-48c2-a624-d3f554dbd991": "TP",
+    "grp_1abf150e-52b8-4cb1-9578-c19811188cfa": "B2F_日比谷線日比谷駅コンコース（仮）",
+    "grp_c6e017d2-0dcf-4fb8-a3a1-5fc4c025e609": "B1F_東西線大手町連絡通路（仮）",
+    "grp_886ca3f6-716a-4592-9fe1-b78fc3f81e70": "B1F_千代田線二重橋駅コンコース（仮）",
+    "grp_19e9af07-9549-452b-87b8-00cc9a647bad": "B1F_千代田線大手町駅コンコース・半蔵門線連絡通路（仮）",
+    "grp_72ee8837-9623-47c5-9dc4-dcfdcc5df93a": "B1F_千代田線日比谷駅コンコース（仮）",
+    "grp_35a799f3-11f1-4833-9cb7-0b6b75ad8c02": "B1F_千代田線大手町駅コンコース・半蔵門線連絡通路（仮）+300",
+    "grp_6a111889-a75d-4d1a-9cec-2ca44e2bbd04": "B1F_千代田線二重橋駅コンコース+1,000（仮）",
+    "grp_f00f7204-561b-4032-840d-85384168c20c": "B1F_千代田線二重橋駅コンコース+1,200（仮）",
+    "grp_333884b0-4cf3-4738-abe3-26b1812a0b4e": "B1F_千代田線日比谷駅コンコース（仮）+900",
+    "grp_fd146d94-8e84-4e8d-969c-5d01d73569f6": "B1F_千代田線大手町駅コンコース・半蔵門線連絡通路（仮）+3,000",
+    "grp_8613deff-55f6-4032-9f30-a74f5ab61357": "B1F_行幸地下ギャラリー（TP+150）",
+    "grp_23109870-72ab-4ef1-8161-bd89829a4387": "JR有楽町駅フォーラム口・日比谷口（TP+2,160）"
+  },
+  "glbBytes": 19356240,
+  "glbSha256": "3ce2df1b964120efa2934ac06c1947d237ef51bc4cba58fde1f9aab26031b74f"
+}

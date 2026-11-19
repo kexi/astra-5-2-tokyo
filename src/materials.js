@@ -38,28 +38,34 @@ function cloudVolume() {
     seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
     return seed / 2 ** 32;
   };
-  const layers = [4, 8, 16, 32].map(period => ({
-    period, values: Float32Array.from({ length: period ** 3 }, random),
+  const layers = [4, 8, 16, 32].map((period) => ({
+    period,
+    values: Float32Array.from({ length: period ** 3 }, random),
   }));
   const mix = T.MathUtils.lerp;
   const sample = ({ period, values }, x, y, z) => {
     const scale = period / size;
-    const px = x * scale, py = y * scale, pz = z * scale;
-    const ix = Math.floor(px), iy = Math.floor(py), iz = Math.floor(pz);
-    const fade = t => t * t * (3 - 2 * t);
-    const at = (a, b, c) => values[((c % period) * period + b % period) * period + a % period];
-    const slice = c => mix(
-      mix(at(ix, iy, c), at(ix + 1, iy, c), fade(px - ix)),
-      mix(at(ix, iy + 1, c), at(ix + 1, iy + 1, c), fade(px - ix)),
-      fade(py - iy),
-    );
+    const px = x * scale,
+      py = y * scale,
+      pz = z * scale;
+    const ix = Math.floor(px),
+      iy = Math.floor(py),
+      iz = Math.floor(pz);
+    const fade = (t) => t * t * (3 - 2 * t);
+    const at = (a, b, c) => values[((c % period) * period + (b % period)) * period + (a % period)];
+    const slice = (c) =>
+      mix(
+        mix(at(ix, iy, c), at(ix + 1, iy, c), fade(px - ix)),
+        mix(at(ix, iy + 1, c), at(ix + 1, iy + 1, c), fade(px - ix)),
+        fade(py - iy),
+      );
     return mix(slice(iz), slice(iz + 1), fade(pz - iz));
   };
   for (let z = 0; z < size; z++) {
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         const value = layers.reduce((sum, layer, i) => sum + sample(layer, x, y, z) * 0.53 ** i, 0);
-        samples[(z * size + y) * size + x] = Math.round(value * 255 / 1.956);
+        samples[(z * size + y) * size + x] = Math.round((value * 255) / 1.956);
       }
     }
   }
@@ -73,7 +79,9 @@ function cloudVolume() {
 
 export function makeSky() {
   const material = new T.ShaderMaterial({
-    glslVersion: T.GLSL3, side: T.BackSide, depthWrite: false,
+    glslVersion: T.GLSL3,
+    side: T.BackSide,
+    depthWrite: false,
     uniforms: {
       ...atmosphereUniforms,
       volume: { value: cloudVolume() },
@@ -142,11 +150,16 @@ function addWindowReflections(shader) {
   shader.uniforms.facadeReflection = facadeReflection;
   shader.uniforms.facadeProbeReady = facadeProbeReady;
   shader.uniforms.facadeProbeOrigin = { value: reflectionOrigin };
-  shader.fragmentShader = `
+  shader.fragmentShader =
+    `
     uniform samplerCube facadeReflection;
     uniform float facadeProbeReady;
     uniform vec3 facadeProbeOrigin;
-  ` + shader.fragmentShader.replace('#include <normal_fragment_maps>', `
+  ` +
+    shader.fragmentShader
+      .replace(
+        '#include <normal_fragment_maps>',
+        `
     #include <normal_fragment_maps>
     vec3 facadeNormal = transformNormalByInverseViewMatrix(normal, viewMatrix);
     float verticalWall = 1. - smoothstep(.15, .53, abs(facadeNormal.y));
@@ -164,7 +177,11 @@ function addWindowReflections(shader) {
     float pane = verticalWall * cool * max(bluePane, insetPane);
     float paneRoughness = .20 + .12 * (1. - blue) + .09 * (1. - inset);
     roughnessFactor = mix(roughnessFactor, paneRoughness, .87 * pane);
-  `).replace('#include <opaque_fragment>', `
+  `,
+      )
+      .replace(
+        '#include <opaque_fragment>',
+        `
     bool hasVisibleGlazing = pane > .008;
     if (hasVisibleGlazing) {
       vec3 towardEye = normalize(cameraPosition - terrainPoint);
@@ -185,34 +202,48 @@ function addWindowReflections(shader) {
       outgoingLight = mix(outgoingLight, reflected * vec3(.88, .96, 1.), coverage);
     }
     #include <opaque_fragment>
-  `);
+  `,
+      );
 }
 
 export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
   const hasWindowPhoto = kind === 'building' && Boolean(texture);
   const material = new T.MeshStandardMaterial({
     map: texture ?? null,
-    color: { ground: '#e9e4db', road: '#e3dfd9', grass: '#6b7740', bridge: '#a3a297', furniture: '#848f91', building: '#cfc6b6', leaf: '#70864c', trunk: '#655647' }[kind],
-    roughness: kind === 'building' ? .78 : .95,
+    color: {
+      ground: '#e9e4db',
+      road: '#e3dfd9',
+      grass: '#6b7740',
+      bridge: '#a3a297',
+      furniture: '#848f91',
+      building: '#cfc6b6',
+      leaf: '#70864c',
+      trunk: '#655647',
+    }[kind],
+    roughness: kind === 'building' ? 0.78 : 0.95,
     side: T.DoubleSide,
   });
-  material.onBeforeCompile = shader => {
+  material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, atmosphereUniforms);
-    shader.vertexShader = 'varying vec3 terrainPoint;\n' + shader.vertexShader.replace(
-      '#include <begin_vertex>',
-      `#include <begin_vertex>
+    shader.vertexShader =
+      'varying vec3 terrainPoint;\n' +
+      shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
        vec4 terrainVertex = vec4(transformed,1.);
        #ifdef USE_INSTANCING
          terrainVertex = instanceMatrix * terrainVertex;
        #endif
        terrainPoint = (modelMatrix * terrainVertex).xyz;`,
-    );
+      );
     if (projectMap) {
       shader.uniforms.projectMap = { value: projectMap };
-      shader.vertexShader = 'uniform vec4 projectMap;\n' + shader.vertexShader.replace(
-        'terrainPoint = (modelMatrix * terrainVertex).xyz;',
-        'terrainPoint = (modelMatrix * terrainVertex).xyz; vMapUv = terrainPoint.xz * projectMap.xy + projectMap.zw;',
-      );
+      shader.vertexShader =
+        'uniform vec4 projectMap;\n' +
+        shader.vertexShader.replace(
+          'terrainPoint = (modelMatrix * terrainVertex).xyz;',
+          'terrainPoint = (modelMatrix * terrainVertex).xyz; vMapUv = terrainPoint.xz * projectMap.xy + projectMap.zw;',
+        );
     }
     if (overlays.length) {
       const declarations = [];
@@ -227,7 +258,9 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
           vec2 edge${i} = min(patchUV${i}, 1. - patchUV${i});
           vec4 detail${i} = texture2D(detailPhoto${i}, patchUV${i});
           float blend${i} = smoothstep(0., .035, min(edge${i}.x, edge${i}.y)) * detail${i}.a;
-          ${parkSurface ? `
+          ${
+            parkSurface
+              ? `
             // Repaired lawn polygons lie west of the moat. The two station rows
             // use the same patch on stone paving and keep their original grain.
             float grassPixel = length(fwidth(terrainPoint.xz));
@@ -235,14 +268,19 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
             float grassTips = surfaceDetail(terrainPoint * vec3(21., 2., 14.)) - .5;
             float nearTurf = (1.-smoothstep(.045,.30,grassPixel)) * (1.-smoothstep(-430.,-410.,terrainPoint.x));
             detail${i}.rgb *= 1. + nearTurf * (.41*grassTufts + .15*grassTips);
-          ` : ''}
+          `
+              : ''
+          }
           surveyedPhoto = mix(surveyedPhoto, detail${i}.rgb, blend${i});
         `);
       }
-      shader.fragmentShader = declarations.join('\n') + '\n' + shader.fragmentShader.replace(
-        '#include <map_fragment>',
-        `vec3 surveyedPhoto = texture2D(map, vMapUv).rgb;${blending.join('\n')} diffuseColor.rgb *= surveyedPhoto;`,
-      );
+      shader.fragmentShader =
+        declarations.join('\n') +
+        '\n' +
+        shader.fragmentShader.replace(
+          '#include <map_fragment>',
+          `vec3 surveyedPhoto = texture2D(map, vMapUv).rgb;${blending.join('\n')} diffuseColor.rgb *= surveyedPhoto;`,
+        );
     }
     if (kind === 'ground') {
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -255,7 +293,8 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
         `,
       );
     }
-    shader.fragmentShader = `${atmosphere}
+    shader.fragmentShader =
+      `${atmosphere}
       varying vec3 terrainPoint;
       float hashDetail(vec3 p) {
         vec3 h = fract(p * .3183099 + vec3(.14,.26,.37)) * 17.;
@@ -274,36 +313,48 @@ export function surfaceMaterial(kind, texture, projectMap, overlays = []) {
         float grain = mix(flecks, .5, smoothstep(.25, 1.7, length(fwidth(p.xz))));
         return .62 + .55 * surfaceDetail(p * .10) + .32 * grain;
       }
-    ` + shader.fragmentShader.replace('#include <color_fragment>', {
-      ground: `#include <color_fragment>
+    ` +
+      shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        {
+          ground: `#include <color_fragment>
         diffuseColor.rgb *= .87 + .24 * surfaceDetail(terrainPoint * .2);
         float green = diffuseColor.g - max(diffuseColor.r, diffuseColor.b);
         float turf = smoothstep(.002,.037,green) * smoothstep(.045,.22,diffuseColor.g);
         diffuseColor.rgb *= mix(vec3(1.025,.992,.929), vec3(1.03,1.10,.91) * grassCover(terrainPoint), turf);`,
-      road: `#include <color_fragment>
+          road: `#include <color_fragment>
         diffuseColor.rgb *= .96+.075*surfaceDetail(terrainPoint*.85)+.05*surfaceDetail(terrainPoint*.073);`,
-      grass: `#include <color_fragment>
+          grass: `#include <color_fragment>
         diffuseColor.rgb *= grassCover(terrainPoint);`,
-      building: `#include <color_fragment>
+          building: `#include <color_fragment>
         diffuseColor.rgb *= .83+.24*surfaceDetail(terrainPoint*.053)+.045*surfaceDetail(terrainPoint*1.7);`,
-      leaf: `#include <color_fragment>
+          leaf: `#include <color_fragment>
         diffuseColor.rgb *= .73+.49*surfaceDetail(terrainPoint*1.2);`,
-      bridge: `#include <color_fragment>
+          bridge: `#include <color_fragment>
         diffuseColor.rgb *= .91 + .15 * surfaceDetail(terrainPoint * .32);`,
-      furniture: '#include <color_fragment>',
-      trunk: '#include <color_fragment>',
-    }[kind]).replace('#include <tonemapping_fragment>', `
+          furniture: '#include <color_fragment>',
+          trunk: '#include <color_fragment>',
+        }[kind],
+      );
+    if (material.fog)
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <tonemapping_fragment>',
+        `
         gl_FragColor.rgb = aerialPerspective(gl_FragColor.rgb, terrainPoint, vViewPosition.z);
-        #include <tonemapping_fragment>`);
+        #include <tonemapping_fragment>`,
+      );
     if (hasWindowPhoto) addWindowReflections(shader);
   };
-  material.customProgramCacheKey = () => hasWindowPhoto ? 'building-photo' : `${kind}-${overlays.length}`;
+  material.customProgramCacheKey = () =>
+    `${hasWindowPhoto ? 'building-photo' : kind}-${overlays.length}-${material.fog}`;
   return material;
 }
 
 export function captureMoatReflection(renderer, scene, material) {
   const cube = new T.WebGLCubeRenderTarget(256, {
-    type: T.HalfFloatType, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter,
+    type: T.HalfFloatType,
+    generateMipmaps: true,
+    minFilter: T.LinearMipmapLinearFilter,
   });
   const camera = new T.CubeCamera(1, 6500, cube);
   camera.position.copy(reflectionOrigin);
@@ -319,10 +370,14 @@ export function captureMoatReflection(renderer, scene, material) {
 
 export function waterMaterial() {
   return new T.ShaderMaterial({
-    side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1,
+    side: T.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
     uniforms: {
-      ...atmosphereUniforms, seconds: { value: 0 },
-      cityReflection: { value: null }, reflectionOrigin: { value: reflectionOrigin },
+      ...atmosphereUniforms,
+      seconds: { value: 0 },
+      cityReflection: { value: null },
+      reflectionOrigin: { value: reflectionOrigin },
     },
     vertexShader: `
       varying vec3 waterPoint;
@@ -388,11 +443,17 @@ export function makeFlare(renderer) {
   };
   const screen = new T.Scene();
   const camera = new T.Camera();
-  const plane = new T.Mesh(new T.PlaneGeometry(2, 2), new T.ShaderMaterial({
-    uniforms, transparent: true, blending: T.AdditiveBlending, depthTest: false, depthWrite: false,
-    vertexShader: `varying vec2 vUV;
+  const plane = new T.Mesh(
+    new T.PlaneGeometry(2, 2),
+    new T.ShaderMaterial({
+      uniforms,
+      transparent: true,
+      blending: T.AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+      vertexShader: `varying vec2 vUV;
       void main() { vUV = uv; gl_Position = vec4(position.xy,0.,1.); }`,
-    fragmentShader: `
+      fragmentShader: `
       varying vec2 vUV;
       uniform vec2 location;
       uniform float strength, aspect;
@@ -415,7 +476,8 @@ export function makeFlare(renderer) {
         glow += vec3(.84,.63,.26) * ghost(uv,origin,.36,.027)*.075;
         gl_FragColor = vec4(glow, strength);
       }`,
-  }));
+    }),
+  );
   plane.frustumCulled = false;
   screen.add(plane);
   const probe = new T.Vector3();
@@ -433,7 +495,7 @@ export function makeFlare(renderer) {
     const edge = Math.max(Math.abs(probe.x), Math.abs(probe.y));
     if (edge > 1.34) return;
     const now = performance.now();
-    const seeked = seconds < lastSeconds || seconds - lastSeconds > .15;
+    const seeked = seconds < lastSeconds || seconds - lastSeconds > 0.15;
     lastSeconds = seconds;
     if (fixed || seeked || now >= nextTest) {
       ray.set(view.position, sun);
@@ -441,9 +503,9 @@ export function makeFlare(renderer) {
       nextTest = now + 120;
     }
     if (!visibility) return;
-    uniforms.location.value.set(probe.x * .5 + .5, probe.y * .5 + .5);
+    uniforms.location.value.set(probe.x * 0.5 + 0.5, probe.y * 0.5 + 0.5);
     uniforms.aspect.value = view.aspect;
-    uniforms.strength.value = 1 - T.MathUtils.smoothstep(edge, .68, 1.34);
+    uniforms.strength.value = 1 - T.MathUtils.smoothstep(edge, 0.68, 1.34);
     const autoClear = renderer.autoClear;
     renderer.autoClear = false;
     renderer.render(screen, camera);

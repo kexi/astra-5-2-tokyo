@@ -1,5 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
+# dependencies = []
 # ///
 """Model supported Tokyo Station track sections from OSM geometry and Tokyo laser levels."""
 

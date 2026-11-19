@@ -128,7 +128,12 @@ def project_photos(graph, original, surface, overlays, shade_banks):
             grain.blend_type = "MULTIPLY"
             link(is_lawn, grain.inputs[0])
             link(patch_color, grain.inputs[1])
-            link(operation("ADD", .78, operation("MULTIPLY", tufts.outputs["Fac"], .44)), grain.inputs[2])
+            link(
+                operation(
+                    "ADD", 0.78, operation("MULTIPLY", tufts.outputs["Fac"], 0.44)
+                ),
+                grain.inputs[2],
+            )
             patch_color = grain.outputs[0]
         link(patch_color, mix.inputs[2])
         color = mix.outputs["Color"]

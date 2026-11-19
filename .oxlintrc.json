@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "error" },
+  "ignorePatterns": ["vendor/", "assets/", "dist/", "output/", "review/"],
+  "overrides": [
+    { "files": ["src/**/*.js"], "env": { "browser": true } },
+    { "files": ["tools/**/*.mjs", "*.config.mjs"], "env": { "node": true } }
+  ]
+}

@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.13,<3.14"
+# dependencies = []
+#
+# [tool.blender]
+# version = "5.2"
+# ///
 """広葉樹の生成と配置。Blender の Z-up 座標、実寸メートルで扱う。"""
 
 from math import cos, pi, sin, tau

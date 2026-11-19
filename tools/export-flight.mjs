@@ -18,7 +18,12 @@ const frames = [];
 for (let frame = 0; frame < Math.round(duration * fps); frame++) {
   const time = frame / fps;
   const pose = flightPose(camera, time);
-  frames.push({ shot: pose.index, name: pose.name, position: camera.position.toArray(),
-    target: pose.target.toArray(), fov: camera.fov });
+  frames.push({
+    shot: pose.index,
+    name: pose.name,
+    position: camera.position.toArray(),
+    target: pose.target.toArray(),
+    fov: camera.fov,
+  });
 }
 await writeFile(file, JSON.stringify({ fps, frames }));

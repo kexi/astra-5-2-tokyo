@@ -1,0 +1,99 @@
+{
+  "rotationDegrees": 79.28742872571175,
+  "translationEastNorth": [-927.4663854700156, -817.8099075573764],
+  "reference": "https://www.geospatial.jp/ckan/dataset/eb79c194-3f26-4c41-9b48-6664f4684ebc/resource/d441c885-6a15-476b-836d-cddd9a5fa006/download/shapefile.zip",
+  "referenceZipSha256": "c7a79ea9e141721cd6f9dba443ba9bd9120a0bcba025597b83e755a6ab3acec1",
+  "withheldPrefixes": ["ChiyodaNiju", "MaruTokyo", "HibiyaHibiya"],
+  "training": {
+    "points": 332,
+    "medianM": 0.054,
+    "p90M": 0.242,
+    "maxM": 3.711
+  },
+  "withheld": {
+    "points": 74,
+    "medianM": 0.045,
+    "p90M": 0.38,
+    "maxM": 4.058
+  },
+  "byReferenceFile": {
+    "ChiyodaHibiya_B1_Floor.shp": {
+      "points": 14,
+      "medianM": 0.197,
+      "p90M": 0.307,
+      "maxM": 0.787
+    },
+    "ChiyodaNiju_B1_Floor.shp": {
+      "points": 28,
+      "medianM": 0.038,
+      "p90M": 2.197,
+      "maxM": 3.804
+    },
+    "ChiyodaOtemati_B1_Floor.shp": {
+      "points": 48,
+      "medianM": 0.051,
+      "p90M": 0.284,
+      "maxM": 1.634
+    },
+    "GinzaGinza_B1_Floor.shp": {
+      "points": 8,
+      "medianM": 0.088,
+      "p90M": 0.111,
+      "maxM": 0.161
+    },
+    "Hanzo_B1_Floor.shp": {
+      "points": 9,
+      "medianM": 0.091,
+      "p90M": 0.141,
+      "maxM": 0.199
+    },
+    "HibiyaHibiya_B2_Floor.shp": {
+      "points": 1,
+      "medianM": 0.088,
+      "p90M": 0.088,
+      "maxM": 0.088
+    },
+    "MaruGinza_B1_Floor.shp": {
+      "points": 56,
+      "medianM": 0.056,
+      "p90M": 0.237,
+      "maxM": 2.914
+    },
+    "MaruOtemati_B1_Floor.shp": {
+      "points": 47,
+      "medianM": 0.064,
+      "p90M": 0.07,
+      "maxM": 0.199
+    },
+    "MaruTokyo_B1_Floor.shp": {
+      "points": 45,
+      "medianM": 0.046,
+      "p90M": 0.289,
+      "maxM": 4.058
+    },
+    "MitaHibiya_B1_Floor.shp": {
+      "points": 50,
+      "medianM": 0.035,
+      "p90M": 0.202,
+      "maxM": 3.711
+    },
+    "MitaOtemati_B1_Floor.shp": {
+      "points": 47,
+      "medianM": 0.042,
+      "p90M": 0.242,
+      "maxM": 0.674
+    },
+    "Tozai_B2_Floor.shp": {
+      "points": 24,
+      "medianM": 0.054,
+      "p90M": 0.28,
+      "maxM": 1.634
+    },
+    "Yurakucho_B1_Floor.shp": {
+      "points": 29,
+      "medianM": 0.029,
+      "p90M": 0.231,
+      "maxM": 0.384
+    }
+  }
+}

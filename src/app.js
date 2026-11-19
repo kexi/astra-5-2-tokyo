@@ -4,7 +4,7 @@ import { loadCity } from './city.js';
 import { captureMoatReflection, makeFlare, makeSky, mist, sun } from './materials.js';
 import { detailPose, duration, flightPose, reviewPose } from './flight.js';
 
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 const canvas = $('view');
 const query = new URLSearchParams(location.search);
 const capture = query.has('capture');
@@ -15,7 +15,10 @@ document.body.classList.toggle('cinema', cinema);
 
 async function initialize() {
   const renderer = new T.WebGLRenderer({
-    canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: capture,
+    canvas,
+    antialias: true,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: capture,
   });
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.24;
@@ -34,8 +37,8 @@ async function initialize() {
   controls.enableDamping = !motion.matches;
   controls.minDistance = 83;
   controls.maxDistance = 1700;
-  controls.maxPolarAngle = 1.40;
-  controls.minPolarAngle = .10;
+  controls.maxPolarAngle = 1.4;
+  controls.minPolarAngle = 0.1;
   controls.screenSpacePanning = false;
 
   const sunlight = new T.DirectionalLight('#ffcf9c', 2.32);
@@ -49,22 +52,26 @@ async function initialize() {
   sunlight.shadow.camera.right = sunlight.shadow.camera.top = 1530;
   sunlight.shadow.camera.near = 750;
   sunlight.shadow.camera.far = 5250;
-  sunlight.shadow.normalBias = .64;
-  sunlight.shadow.bias = -.00007;
-  sunlight.shadow.intensity = .83;
+  sunlight.shadow.normalBias = 0.64;
+  sunlight.shadow.bias = -0.00007;
+  sunlight.shadow.intensity = 0.83;
   scene.add(sunlight, sunlight.target, new T.HemisphereLight('#d2def0', '#afa090', 1.79));
 
   const bar = $('loading').querySelector('progress');
   const city = await loadCity((done, total) => {
     bar.max = total;
     bar.value = done;
-    $('loading').querySelector('span').textContent = `都市モデルを読み込み中 ${Math.floor(100 * done / total)}%`;
+    $('loading').querySelector('span').textContent =
+      `都市モデルを読み込み中 ${Math.floor((100 * done) / total)}%`;
   }, renderer.capabilities.getMaxAnisotropy());
   scene.add(city.root);
   captureMoatReflection(renderer, scene, city.water);
 
   const flare = makeFlare(renderer);
-  let time = 0, paused = true, orbit = false, showFlare = true;
+  let time = 0,
+    paused = true,
+    orbit = false,
+    showFlare = true;
   let previous = 0;
 
   function resize() {
@@ -76,10 +83,12 @@ async function initialize() {
   resize();
   if (!capture) new ResizeObserver(resize).observe(canvas);
 
-  const clockLabel = seconds => `0:${String(Math.floor(seconds)).padStart(2, '0')}`;
+  const clockLabel = (seconds) => `0:${String(Math.floor(seconds)).padStart(2, '0')}`;
   const direction = new T.Vector3();
   function info(pose) {
-    const bearing = (Math.atan2(camera.getWorldDirection(direction).x, -direction.z) * 180 / Math.PI + 360) % 360;
+    const bearing =
+      ((Math.atan2(camera.getWorldDirection(direction).x, -direction.z) * 180) / Math.PI + 360) %
+      360;
     $('bearing').textContent = `${String(Math.round(bearing) % 360).padStart(3, '0')}°`;
     $('height').textContent = `${Math.round(camera.position.y)} m`;
     $('needle').style.transform = `rotate(${-bearing}deg)`;
@@ -97,7 +106,9 @@ async function initialize() {
   function setOrbit(value) {
     orbit = controls.enabled = value;
     $('orbit').setAttribute('aria-pressed', String(value));
-    $('hint').textContent = value ? 'ドラッグで回転・スクロールでズーム・矢印キーで方位と高度を変更' : '東京駅・丸の内・八重洲';
+    $('hint').textContent = value
+      ? 'ドラッグで回転・スクロールでズーム・矢印キーで方位と高度を変更'
+      : '東京駅・丸の内・八重洲';
     if (!value) return;
     setPaused(true);
     const pose = flightPose(camera, time);
@@ -117,7 +128,7 @@ async function initialize() {
   const credit = $('film-credit');
   const fade = T.MathUtils.smoothstep;
   function filmOverlays(seconds) {
-    intro.style.opacity = fade(seconds, .15, 1.0) * (1 - fade(seconds, 3.65, 5.1));
+    intro.style.opacity = fade(seconds, 0.15, 1.0) * (1 - fade(seconds, 3.65, 5.1));
     credit.style.opacity = fade(seconds, duration - 5.3, duration - 4.6);
   }
 
@@ -175,19 +186,28 @@ async function initialize() {
     $('flare').setAttribute('aria-pressed', String(showFlare));
   });
   $('seek').max = duration;
-  $('seek').addEventListener('input', event => {
+  $('seek').addEventListener('input', (event) => {
     setOrbit(false);
     setPaused(true);
     time = Number(event.target.value);
   });
-  $('orbit').addEventListener('keydown', event => {
-    const offsets = { ArrowLeft: [-.16, 0], ArrowRight: [.16, 0], ArrowUp: [0, -.11], ArrowDown: [0, .11] };
+  $('orbit').addEventListener('keydown', (event) => {
+    const offsets = {
+      ArrowLeft: [-0.16, 0],
+      ArrowRight: [0.16, 0],
+      ArrowUp: [0, -0.11],
+      ArrowDown: [0, 0.11],
+    };
     const offset = offsets[event.key];
     if (!orbit || !offset) return;
     event.preventDefault();
     const position = new T.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
     position.theta += offset[0];
-    position.phi = T.MathUtils.clamp(position.phi + offset[1], controls.minPolarAngle, controls.maxPolarAngle);
+    position.phi = T.MathUtils.clamp(
+      position.phi + offset[1],
+      controls.minPolarAngle,
+      controls.maxPolarAngle,
+    );
     camera.position.setFromSpherical(position).add(controls.target);
     controls.update();
   });
@@ -197,7 +217,7 @@ async function initialize() {
   renderer.setAnimationLoop(animate);
 
   function animate(ms) {
-    const dt = previous ? Math.min(.10, (ms - previous) / 1000) : 0;
+    const dt = previous ? Math.min(0.1, (ms - previous) / 1000) : 0;
     previous = ms;
     if (!paused) {
       time = Math.min(time + dt, duration);
@@ -210,7 +230,12 @@ async function initialize() {
   }
 }
 
-initialize().catch(error => {
+const model = query.get('model');
+const study = model === 'buildings' || model === 'underground';
+const ready = study
+  ? import('./architecture.js').then((module) => module.initializeStudy(model, capture))
+  : initialize();
+ready.catch((error) => {
   window.flightFailure = error.message;
   console.error(error);
   $('loading').querySelector('span').textContent = `表示できませんでした。 ${error.message}`;
