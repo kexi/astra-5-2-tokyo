@@ -1,6 +1,5 @@
 """Locally replace photogrammetric occlusions on reviewed Marunouchi and Otemachi elevations."""
 
-import bpy
 import numpy as np
 from omy_facade_blocks import EXTRA_REPAIRS
 
@@ -644,6 +643,8 @@ def match_glazing_by_floor(patch, original, y, reference, area):
 
 
 def make_plate(name, rgb, owners):
+    import bpy
+
     # Extend the border by three texels so mipmaps do not mix black into edges.
     coverage = owners >= 0
     for _ in range(3):

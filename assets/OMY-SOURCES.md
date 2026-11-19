@@ -4,7 +4,7 @@
 
 各棟の建物ID・GML ID・元タイル・棟名・位置の照合に使った資料を対応表に収録した。敷地内の屋根に4 m間隔の垂線を当て、主棟の地物を特定した。星のや東京と丸ノ内ホテルは施設位置付近の複数点で照合した。三菱UFJ信託銀行本店ビルと日本工業倶楽部会館は一体の保存・再生事業で、PLATEAUの同じ地物が高層部と保存棟を含む。各建物のカスタムプロパティに元の名称も残した。[建物対応表](../tools/omy-buildings.json)・[設計者の物件ページ](https://www.mjd.co.jp/projects/29279/)・[丸ノ内ホテルのアクセス図](https://www.marunouchi-hotel.co.jp/about/access/)
 
-棟の位置の照合には © OpenStreetMap contributors の建物外形・地点を使用した。位置の対応表はODbL 1.0で提供する。外形メッシュと写真はPLATEAUから加工し、各棟で画像のある面だけを、塗り足し付きの独立したアトラスへ移した。22棟の60,709三角形のうち、画像がある面は47,552。画像がない面には元の頂点色とマテリアルを保持した。[OpenStreetMapの出典](https://www.openstreetmap.org/copyright)・[ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
+棟の位置の照合には © OpenStreetMap contributors の建物外形・地点を使用した。位置の対応表はODbL 1.0で提供する。外形メッシュと写真はPLATEAUから加工した。22棟の60,709三角形のうち、原典に画像があるのは47,552面。初版ではこの写真を棟別のアトラスに移し、写真がない面には元の頂点色と材質を使用した。現行版では補修した外壁写真、写真欠損を補う推定仕上げ、上面に合わせたオルソ画像を棟専用の1枚に収録し、貼り付けた面の種類をBlenderに記録している。[全棟のテクスチャ制作と出典](https://github.com/kexi/astra-5-2-tokyo/blob/main/assets/BUILDING-TEXTURES.md)・[OpenStreetMapの出典](https://www.openstreetmap.org/copyright)・[ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
 
 丸の内・大手町・常盤橋では、各棟を一周して外壁に周囲の建物や屋上が写り込んだ箇所を特定し、同じ棟で屋根や設備が重なっていない面から窓列と外装材の写真を採って補修した。対象の三角形数と採取元の壁面を棟別に記録している。[壁面ごとの補修範囲](OMY-FACADE-REPAIRS.md)
 

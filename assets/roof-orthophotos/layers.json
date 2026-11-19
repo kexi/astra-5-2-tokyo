@@ -1,0 +1,62 @@
+[
+  {
+    "file": "roof-orthophotos/116411-51612.jpg",
+    "zoom": 17,
+    "bounds": [
+      116411,
+      51612,
+      116412,
+      51613
+    ],
+    "source": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/17/116411/51612.jpg",
+    "sha256": "d49f5aed1d73fdde456f5b370758e31f83e99eb80879cbbac43a56f01a6e4081"
+  },
+  {
+    "file": "roof-orthophotos/116411-51613.jpg",
+    "zoom": 17,
+    "bounds": [
+      116411,
+      51613,
+      116412,
+      51614
+    ],
+    "source": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/17/116411/51613.jpg",
+    "sha256": "0c2036175df76e58439a94d86339a92af57fd7d18a6eec88f54f18a0d0c926f3"
+  },
+  {
+    "file": "roof-orthophotos/116411-51614.jpg",
+    "zoom": 17,
+    "bounds": [
+      116411,
+      51614,
+      116412,
+      51615
+    ],
+    "source": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/17/116411/51614.jpg",
+    "sha256": "caa0ed5b7d70f98d3992235c7349beca7e6c5866082fde5523c3b2f01952c892"
+  },
+  {
+    "file": "roof-orthophotos/116426-51625.jpg",
+    "zoom": 17,
+    "bounds": [
+      116426,
+      51625,
+      116427,
+      51626
+    ],
+    "source": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/17/116426/51625.jpg",
+    "sha256": "fb04361bfef46119d1fff4ee5374e72210b52a3ea6f7a17ca2a6751447d35ad5"
+  },
+  {
+    "file": "roof-orthophotos/116427-51625.jpg",
+    "zoom": 17,
+    "bounds": [
+      116427,
+      51625,
+      116428,
+      51626
+    ],
+    "source": "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/17/116427/51625.jpg",
+    "sha256": "d4c28b55707cace2ef0c0d6b6e2e2f0868ad0abaf104f538338dcf228a80af1a"
+  }
+]

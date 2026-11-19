@@ -107,6 +107,36 @@
             </p>
           </div>
         </footer>
+        <footer class="flight-panel" id="city-study-panel" hidden>
+          <form class="transport study-controls" id="city-find">
+            <label for="city-search">建物ID・名称</label>
+            <input type="search" id="city-search" list="city-matches" autocomplete="off" required />
+            <datalist id="city-matches"></datalist>
+            <button type="submit">表示</button>
+            <button type="button" id="city-rotate">自動で回転</button>
+            <button type="button" id="city-reset">視点を戻す</button>
+            <a href="./">空撮に戻る</a>
+          </form>
+          <div class="footnote">
+            <p id="city-status" role="status"></p>
+            <div class="city-help">
+              <span id="city-count"></span>
+              <details>
+                <summary>操作とレビュー画像</summary>
+                <p>
+                  建物IDか名称を入力して候補を選び、「表示」を押してください。ドラッグまたは矢印キーで回転し、スクロールやピンチで拡大できます。
+                </p>
+                <p>
+                  推定／補修の面数には一部を貼り直した面も含みます。判定保留は、撮影元の壁と周囲の建物を見分けにくく、元の写真を残した範囲です。
+                </p>
+                <a
+                  href="https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-textures-v2/building-turntables.zip"
+                  >全棟の8方位・俯瞰のレビュー画像（ZIP）</a
+                >
+              </details>
+            </div>
+          </div>
+        </footer>
         <footer class="flight-panel">
           <div class="transport">
             <button id="play" type="button" disabled>空撮を再生</button>
@@ -133,8 +163,9 @@
               <a class="film-link" href="output/tokyo-station.mp4">空撮動画を見る（MP4）</a
               ><a
                 class="film-link"
-                href="https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-buildings-v1/tokyo-station.blend"
-                >全23,115棟のBlenderファイル（350 MiB）</a
+                href="https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-textures-v2/tokyo-station.blend"
+                >全23,115棟のBlenderファイル</a
+              ><a class="film-link" href="?model=city-buildings">全23,115棟を検索</a
               ><a class="film-link" href="?model=buildings">大丸有の22棟</a
               ><a class="film-link" href="?model=underground">地下街の断面</a
               ><span id="hint">東京駅・丸の内・八重洲</span>

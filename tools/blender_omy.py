@@ -206,15 +206,20 @@ def export_buildings(group, path):
         obj.select_set(True)
         for material in obj.data.materials:
             tree = material.node_tree
-            glazing = tree.nodes.get("PLATEAU · Facade glazing")
-            if glazing is None:
-                continue
-            # glTF cannot encode the Blender normal- and colour-dependent window graph.
-            # Its exporter otherwise follows the photo input into the roughness channel.
-            for output in glazing.outputs:
-                for link in list(output.links):
-                    detached.append((tree, output, link.to_socket))
-                    tree.links.remove(link)
+            # glTF cannot encode procedural glazing or submillimetre grain.
+            # Leave the atlas in base colour and use the original PBR scalars.
+            for node in tree.nodes:
+                if node.type != "GROUP" or not node.node_tree:
+                    continue
+                if node.node_tree.name not in {
+                    "PLATEAU · Facade glazing",
+                    "PLATEAU · Building paint relief",
+                }:
+                    continue
+                for output in node.outputs:
+                    for link in list(output.links):
+                        detached.append((tree, output, link.to_socket))
+                        tree.links.remove(link)
     try:
         bpy.ops.export_scene.gltf(
             filepath=str(path),

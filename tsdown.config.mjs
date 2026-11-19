@@ -47,7 +47,6 @@ export default defineConfig({
         'manifest.json',
         manifest.photo.file,
         manifest.elevation.file,
-        ...manifest.archives,
         ...models,
         ...foliage,
         'park-ground.json',
@@ -59,6 +58,7 @@ export default defineConfig({
       ];
       await Promise.all([
         writeFile('dist/index.html', html.replace(importMap[0], '')),
+        cp('assets/buildings', 'dist/assets/buildings', { recursive: true }),
         cp('review/building-textures.csv', 'dist/review/building-textures.csv'),
         cp('output/tokyo-station-og.jpg', 'dist/output/tokyo-station-og.jpg'),
         cp('output/omy-architecture.blend', 'dist/output/omy-architecture.blend'),

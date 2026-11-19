@@ -52,10 +52,28 @@ const server = createServer(async (request, response) => {
     }
     const metadata = await stat(path);
     if (!metadata.isFile()) throw new Error('Not a file');
-    response.writeHead(200, {
+    const headers = {
       'Content-Type': media.get(extname(path)) ?? 'application/octet-stream',
-      'Content-Length': metadata.size,
-    });
+      'Accept-Ranges': 'bytes',
+    };
+    const range = request.headers.range;
+    if (range) {
+      const match = /^bytes=(\d+)-(\d+)$/.exec(range);
+      const start = Number(match?.[1]),
+        end = Number(match?.[2]);
+      if (!match || start > end || end >= metadata.size) {
+        response.writeHead(416, { 'Content-Range': `bytes */${metadata.size}` }).end();
+        return;
+      }
+      response.writeHead(206, {
+        ...headers,
+        'Content-Length': end - start + 1,
+        'Content-Range': `bytes ${start}-${end}/${metadata.size}`,
+      });
+      createReadStream(path, { start, end }).pipe(response);
+      return;
+    }
+    response.writeHead(200, { ...headers, 'Content-Length': metadata.size });
     createReadStream(path).pipe(response);
   } catch {
     response.writeHead(404).end();
@@ -138,12 +156,14 @@ async function openChrome(profile, url) {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  const interactive = mode === 'viewer';
-  const study = mode === 'buildings' || mode === 'underground';
+  const interactive = mode === 'viewer' || mode === 'city-ui';
+  const study = ['buildings', 'underground', 'city-buildings', 'city-ui'].includes(mode);
   const page = new URL(url);
   if (!interactive) page.searchParams.set('capture', '');
   if (cinema) page.searchParams.set('cinema', '');
-  if (study) page.searchParams.set('model', mode);
+  if (study) page.searchParams.set('model', mode === 'city-ui' ? 'city-buildings' : mode);
+  if (['city-buildings', 'city-ui'].includes(mode) && process.env.BUILDING_ID)
+    page.searchParams.set('id', process.env.BUILDING_ID);
   await send('Page.navigate', { url: page.href });
   const evaluate = async (expression) => {
     const result = await send('Runtime.evaluate', {
@@ -160,7 +180,7 @@ async function openChrome(profile, url) {
   try {
     for (let i = 0; i < 300; i++) {
       const state = await evaluate(
-        'window.flightFailure || ((window.flightCapture || window.architectureCapture) && document.getElementById("loading").hidden ? "ready" : "")',
+        'window.flightFailure || ((window.flightCapture || window.architectureCapture || window.buildingCapture || document.getElementById("city-count").textContent) && document.getElementById("loading").hidden ? "ready" : "")',
       );
       if (state === 'ready') {
         if (!study) console.log(await evaluate('flightCapture.stats()'));
@@ -195,6 +215,58 @@ async function makeStills(browser) {
     await browser.evaluate(expression);
     await writeFile(join(output, name + '.jpg'), await browser.screenshot());
     console.log(name);
+  }
+  if (mode === 'city-ui') {
+    const id = process.env.BUILDING_COMPARE_ID ?? '13101-bldg-1826';
+    const state = await browser.evaluate(`(async () => {
+      const input = document.getElementById('city-search'), status = document.getElementById('city-status');
+      const rotate = document.getElementById('city-rotate'), form = document.getElementById('city-find');
+      const label = rotate.textContent;
+      rotate.click();
+      const toggleChanged = rotate.textContent !== label;
+      if (rotate.textContent === '回転を止める') rotate.click();
+      input.value = 'invalid-building-id';
+      form.requestSubmit();
+      const rejected = status.textContent.includes('該当する建物がありません');
+      input.value = ${JSON.stringify(id)};
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+      form.requestSubmit();
+      for (let i=0; i<100; i++) {
+        if (new URLSearchParams(location.search).get('id') === ${JSON.stringify(id)} && !status.textContent.includes('読み込み中')) break;
+        await new Promise(resolve => setTimeout(resolve, 60));
+      }
+      return {selected:new URLSearchParams(location.search).get('id'),toggleChanged,rejected,
+        label:input.labels[0].textContent,status:status.textContent, width:innerWidth,
+        horizontalOverflow:document.documentElement.scrollWidth > innerWidth};
+    })()`);
+    console.log(state);
+    if (
+      state.selected !== id ||
+      !state.toggleChanged ||
+      !state.rejected ||
+      state.horizontalOverflow
+    )
+      throw new Error('建物ビューアの検索・回転・表示幅テストに失敗しました');
+    await writeFile(join(output, 'viewer.jpg'), await browser.screenshot());
+    return;
+  }
+  if (mode === 'city-buildings') {
+    const initial = await browser.evaluate('buildingCapture.state');
+    console.log(initial);
+    const selected = process.env.BUILDING_IDS?.split(',') ?? [initial.id];
+    for (const id of selected) {
+      if (id !== initial.id || selected.length > 1) {
+        await browser.evaluate('buildingCapture.select(' + JSON.stringify(id) + ')');
+      }
+      for (let angle = 0; angle < 360; angle += 45) {
+        await shot(id + '-' + angle, `buildingCapture.frame(${angle})`);
+      }
+    }
+    const requests = await browser.evaluate(
+      'performance.getEntriesByType("resource").filter(r => r.name.includes("/assets/buildings/")).map(r => [new URL(r.name).pathname.split("/").pop(),r.responseStatus,r.encodedBodySize])',
+    );
+    console.log({ requests });
+    return;
   }
   if (mode === 'review') {
     for (const degrees of [0, 45, 90, 135, 180, 225, 270, 315]) {

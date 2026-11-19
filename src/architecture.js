@@ -15,7 +15,7 @@ export async function initializeStudy(model, capture) {
     : 'Otemachi · Marunouchi · Yurakucho';
   document.querySelector('.coordinates').hidden = true;
   document.querySelector('.telemetry').hidden = true;
-  document.querySelector('.flight-panel:not(#model-panel)').hidden = true;
+  document.querySelector('.flight-panel:not([id])').hidden = true;
   $('model-panel').hidden = false;
   $('view').setAttribute('aria-label', title + 'の3D表示');
   $('view').tabIndex = 0;

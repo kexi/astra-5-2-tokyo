@@ -1,0 +1,66 @@
+{
+  "model": "tokyo-station-textures-v2",
+  "blender_sha256": "03871101c2a5b9d6caadf54379d2268c801bbcea21f52336017bdae5af022004",
+  "stage_sha256": "4567888ae84653cf3c7aa434831cca687469329f7890cb12cab119feb511444a",
+  "buildings": 23115,
+  "packedBuildingImages": 23115,
+  "distinctDecodedImages": 23115,
+  "identicalPixels": [],
+  "registeredSurfaceFaces": {
+    "photo": 2339162,
+    "wall": 43324,
+    "roof": 11197,
+    "soffit": 378897,
+    "repair": 74097,
+    "ortho": 11197,
+    "priorRepair": 1026,
+    "repairFromPhoto": 54138
+  },
+  "buildingsBySurface": {
+    "photo": 22620,
+    "wall": 2675,
+    "roof": 1119,
+    "soffit": 22034,
+    "repair": 12664,
+    "ortho": 1119,
+    "priorRepair": 21,
+    "repairFromPhoto": 9524
+  },
+  "screenStates": {
+    "screened": 3305,
+    "locally-reconstructed": 12391,
+    "uncertain": 6597,
+    "no-source-photograph": 495,
+    "astra-reviewed": 272,
+    "astra-retained": 33,
+    "existing-landmark-paint": 22
+  },
+  "buildingsWithUncertainRegions": 19260,
+  "repairFacesByReason": {
+    "1": 1,
+    "3": 160,
+    "4": 1,
+    "5": 5637,
+    "6": 47,
+    "8": 13715,
+    "9": 8,
+    "10": 34784,
+    "11": 19744
+  },
+  "localRepairQuality": {
+    "recordedBuildings": 13605,
+    "evaluatedPixels": 56739201,
+    "retainedPixels": 23396111,
+    "appliedPixels": 33343090,
+    "rejectedDomains": 2577,
+    "assessedBuildings": 13333,
+    "changedBuildings": 12391,
+    "peakAddedBoundaryContrast": 3.0,
+    "peakBuilding": "13101-bldg-1039"
+  },
+  "lod": {
+    "2": 22620,
+    "1": 495
+  },
+  "comparison": "All original mesh vertices, edges, corner indices and UVs, transforms and IDs. Original and exported corner normals within 2e-6. Exported positions, building UVs, face classifications and decoded RGB checked per building."
+}

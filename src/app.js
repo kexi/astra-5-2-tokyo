@@ -232,9 +232,12 @@ async function initialize() {
 
 const model = query.get('model');
 const study = model === 'buildings' || model === 'underground';
-const ready = study
-  ? import('./architecture.js').then((module) => module.initializeStudy(model, capture))
-  : initialize();
+const ready =
+  model === 'city-buildings'
+    ? import('./building-viewer.js').then((module) => module.initializeBuildingViewer(capture))
+    : study
+      ? import('./architecture.js').then((module) => module.initializeStudy(model, capture))
+      : initialize();
 ready.catch((error) => {
   window.flightFailure = error.message;
   console.error(error);

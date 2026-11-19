@@ -4,7 +4,8 @@ PLATEAUの2025年度3D都市モデルを使い、東京駅・丸の内・八重�
 
 - [GitHub Pagesで3Dモデルを見る](https://kexi.github.io/astra-5-2-tokyo/)
 - [空撮動画（MP4）](https://kexi.github.io/astra-5-2-tokyo/output/tokyo-station.mp4)
-- [全23,115棟のBlenderファイル（350 MiB）](https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-buildings-v1/tokyo-station.blend)
+- [全23,115棟の専用テクスチャを収録したBlenderファイル](https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-textures-v2/tokyo-station.blend)
+- [全棟の3D回転ビューア](https://kexi.github.io/astra-5-2-tokyo/?model=city-buildings) ・ [全棟の8方位と俯瞰をオフラインで見る（ZIP）](https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-textures-v2/building-turntables.zip)
 - [360°レビュー](review/README.md)
 - [建物23,115件のLODと画像テクスチャ](review/building-textures.md)
 - [大丸有22棟の外装を棟別に見る](https://kexi.github.io/astra-5-2-tokyo/?model=buildings) ・ [東京駅周辺地下街の断面を見る](https://kexi.github.io/astra-5-2-tokyo/?model=underground)
@@ -22,7 +23,7 @@ pnpm run build
 python3 -m http.server 8421 --bind 127.0.0.1 --directory dist
 ```
 
-ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。空撮を開くと地形・建物テクスチャを含む約187 MiBを読み込みます。棟別の外装と地下街は、それぞれ専用ページから直接開けます。
+ブラウザで `http://127.0.0.1:8421/` を開きます。開発中は `just serve` でソース版を直接表示できます。全棟の回転ビューアでは建物IDまたは収録名で検索できます。自動回転を停止してドラッグすると、気になる壁や屋上を好きな角度から確認できます。地下街は専用ページから直接開けます。
 
 ### ローカルチェック
 
@@ -32,13 +33,21 @@ Webコードは `just format-web` で整形し、`just check-web` でOxfmtとOxl
 
 都市全体の `output/tokyo-station.blend` では、収録したPLATEAU建物23,115棟をそれぞれ選択し、編集モードで頂点や面を編集できます。建物はアウトライナーで千代田区・中央区・港区に分かれ、各区の下に元のタイルがあります。各棟のカスタムプロパティには建物ID（`id`）、地物ID（`gml`）、実際のLOD、写真のある面数が入っています。外壁写真はファイルに埋め込みました。道路・水域・樹木・橋梁・街路設備・軌道は別コレクションにあり、タイムラインには空撮8カットのカメラとマーカーがあります。
 
-Web版は同じ都市形状をタイル単位で読み込み、外装を個別に仕上げた大丸有22棟を専用のGLBから表示します。Blenderの全棟版には写真のある22,620棟と、形状と材質で表現したLOD1の495棟が含まれます。各棟の写真の範囲は[建物ID別の集計](review/building-textures.md)で確認できます。
+Blenderの全23,115棟に、建物IDと同名の画像を埋め込みました。元のPLATEAUに撮影画像がある22,620棟は、その棟の面に対応する画素を使用しています。LOD1の495棟を含め、写真がない外壁は建物の寸法と元の面色から推定し、屋根はその位置のオルソ画像で補いました。Blenderの面属性で、元の写真、補修した壁、推定した面を追跡できます。Three.jsは個別表示で選択した棟の専用画像を読み込み、全景では同じ画像をタイルにまとめて表示します。[テクスチャの出典と面属性](assets/BUILDING-TEXTURES.md) ・ [建物ID別の原典写真の範囲](review/building-textures.md)
 
 三菱地所設計の公開事例図に載る22物件の主棟を公開PLATEAU形状と照合し、建物ごとに独立したメッシュと編集用の外装写真アトラスを作成しました。丸の内二丁目ビルの屋上と上層外壁には、東京都の航空レーザ点群や同一建物の画像から再構成した設備と窓を追加しています。地下街は国交省の2023年度実証で公開されたLOD4.0の地物を取り込みました。床と壁は元データの形状に合わせ、推定仕上げのPBRテクスチャを貼っています。[データ出典・加工範囲と利用条件](assets/OMY-SOURCES.md)
 
-Blender 5.2にBlender LabのMCP拡張と `blender-mcp` を導入し、`just build-blender-mcp` を実行すると、都市全体と大丸有22棟・地下街の `output/omy-architecture.blend` を再生成できます。作品専用のバックグラウンドプロセスを起動し、MCP経由で作成・保存して終了します。`just build-blender` では同じ制作スクリプトを直接実行できます。Blenderの場所は `BLENDER_BIN` で指定できます。
+Blender 5.2にBlender LabのMCP拡張と `blender-mcp` を導入し、`just build-blender-mcp` を実行すると、都市全体の `output/tokyo-station.blend`、大丸有22棟・地下街の `output/omy-architecture.blend`、Three.js用の建物データを再生成できます。作品専用のバックグラウンドプロセスを起動してMCP経由で作成・保存します。`just build-blender` はテクスチャ制作前の基礎モデルを直接生成します。Blenderの場所は `BLENDER_BIN` で指定できます。
 
 データ取得とMCPクライアントは、各スクリプトのPEP 723メタデータを使って `uv run` で起動します。Blender内で動く制作スクリプトは同梱のPython 3.13、`bpy`、NumPyを使用します。Python全体のリントと整形は `just check-python` で検査できます。
+
+全棟版を1ファイルで配布するため、建物の画像はBlenderで復号した画素を保って圧縮できます。`jpegtran` と `cwebp` が使える環境で次を実行してください。別名で保存したファイルを開き直し、棟ごとに全画素のRGBAが元画像と一致することまで検査します。
+
+```sh
+blender -b output/tokyo-station.blend --python-exit-code 1 -P tools/compact-building-paint.py -- output/tokyo-station-compact.blend --cache /tmp/tokyo-lossless
+```
+
+2026年11月19日の起動時クラッシュは、macOS 27.2.1（26B131）の同じBlender 5.2.2 LTSで切り分けました。初期設定で空シーンを開く単独起動は終了コード0で、専用のバックグラウンドプロセスではMCPから都市シーンを開いてテクスチャを作成できました。報告にある `libIlmThread` のスタックには待機中のスレッドが記録されており、元のSIGSEGVの発生原因は特定できていません。再現時の段階別の確認手順は[チェック項目](AGENTS.md)にあります。
 
 ケヤキとクスノキをもとにした木は、根張り、幹、枝、立体の葉を作成しました。葉脈、樹皮、逆光の透過、葉と枝の風揺れをBlenderのノードとシェイプキーで調整できます。Three.jsでも同じBlenderの形状を読み込み、遠くの木は撮影角度別の画像を使って表示します。窓の反射にはPLATEAUの外壁写真から推定した窓面を使います。
 
@@ -49,11 +58,13 @@ PLATEAUの独立木98本は、元データの位置、樹高、樹冠の幅を�
 ```sh
 just review
 just render
+just review-buildings /tmp/tokyo-turntables
+uv run tools/archive-building-reviews.py /tmp/tokyo-turntables output/building-turntables.zip --build tokyo-station-textures-v2 --model output/tokyo-station.blend
 node tools/render.mjs buildings /tmp/tokyo-buildings
 node tools/render.mjs underground /tmp/tokyo-underground
 ```
 
-撮影にはChromeとFFmpegを使用します。Chromeの場所は `CHROME_BIN` で指定できます。レビューは北から時計回りに45°間隔で周回し、低高度4方位、俯瞰、濠、草、フレア比較、空撮ルートの静止画を保存します。動画はBlenderで編集した22棟の外装と屋上設備、樹木を読み込んだThree.jsシーンから、39.5秒の1080p・30 fpsのH.264 MP4として書き出します。
+撮影にはChromeとFFmpegを使用します。Chromeの場所は `CHROME_BIN` で指定できます。レビューは北から時計回りに45°間隔で周回し、低高度4方位、俯瞰、濠、草、フレア比較、空撮ルートの静止画を保存します。動画は全23,115棟の専用画像を使った都市に、丸の内の屋上設備、軌道、街路樹を加えたThree.jsシーンから書き出します。39.5秒の1080p・30 fpsのH.264 MP4です。
 
 都市データを再取得する手順です。鉄道参照データの取得後に、航空レーザと照合して軌道を生成します。
 
@@ -64,7 +75,7 @@ uv run tools/prepare-survey.py
 uv run tools/prepare-park-ground.py
 uv run tools/prepare-expressway.py
 uv run tools/build-rail-model.py
-just build-blender
+just build-blender-mcp
 ```
 
 丸の内駅舎と新丸の内ビルディングでは同じ建物の写真から壁の写り込みを補修し、八重洲のグランルーフ東面は外観資料から推定して描き直しました。元の建物形状とUVを保持しています。[修正前後の比較](review/README.md#空撮で見つけた写真の誤投影)

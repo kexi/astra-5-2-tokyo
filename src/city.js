@@ -6,7 +6,7 @@ import { applyStreetSurface, makeStreetMaterials, roadLift, streetTiles } from '
 import { applyDeckSurface, deckTiles, loadDeckMaterial } from './expressway.js';
 import { applyHedgeSurface, hedgeTile } from './hedges.js';
 import { loadParkTrees } from './trees.js';
-import { finishLandmarks, removeLandmarks } from './landmarks.js';
+import { buildingCatalog, cityBuildings } from './building-assets.js';
 import treeLayout from '../tools/tree-layout.json' with { type: 'json' };
 
 async function fetchAsset(file, format) {
@@ -293,11 +293,12 @@ function parkSites(groundHeight, heights, surveyedTrees, photographedTrees) {
 }
 
 export async function loadCity(progress, anisotropy) {
-  const [manifest, survey, railway, parkGround] = await Promise.all([
+  const [manifest, survey, railway, parkGround, catalog] = await Promise.all([
     fetchAsset('manifest.json', 'json'),
     fetchAsset('survey.json', 'json'),
     fetchAsset('rail-reference.json', 'json'),
     fetchAsset('park-ground.json', 'json'),
+    buildingCatalog(),
   ]);
   const frame = localFrame(manifest.origin);
   const textureLoader = new T.TextureLoader();
@@ -305,7 +306,7 @@ export async function loadCity(progress, anisotropy) {
     return { layer, texture: await textureLoader.loadAsync('assets/' + layer.file) };
   }
   const [archives, basePhoto, photoLayers, elevations, treeHeights] = await Promise.all([
-    Promise.all(manifest.archives.map(cityArchive)),
+    Promise.all(catalog.infrastructure.files.map((file) => cityArchive('buildings/' + file))),
     loadLayer(manifest.photo),
     Promise.all([parkGround.layer, ...survey.photos].map(loadLayer)),
     Promise.all([...survey.elevations, manifest.elevation].map(loadLayer)),
@@ -342,18 +343,6 @@ export async function loadCity(progress, anisotropy) {
   const root = new T.Group();
   const buildings = new T.Group();
   root.add(ground, buildings);
-  const landmarks = (await loader.loadAsync('assets/omy-buildings.glb')).scene;
-  const replacements = new Map();
-  let landmarkFaces = 0,
-    replacedFaces = 0;
-  for (const object of landmarks.children) {
-    const { tile, batch, faces } = object.userData;
-    if (!replacements.has(tile)) replacements.set(tile, new Set());
-    replacements.get(tile).add(batch);
-    landmarkFaces += faces;
-  }
-  finishLandmarks(landmarks, anisotropy, true);
-  buildings.add(landmarks);
   const rooftop = loader.loadAsync('assets/marunouchi-nichome.glb').then(({ scene }) => {
     scene.traverse((object) => {
       if (!object.isMesh) return;
@@ -387,7 +376,6 @@ export async function loadCity(progress, anisotropy) {
   const water = waterMaterial();
   const roads = surfaceMaterial('road', photo, projectedTexture(frame, manifest.photo), overlays);
   const grass = surfaceMaterial('grass');
-  const clay = surfaceMaterial('building');
   const leafMesh = surfaceMaterial('leaf');
   roads.polygonOffset = true;
   roads.polygonOffsetFactor = -1;
@@ -397,94 +385,81 @@ export async function loadCity(progress, anisotropy) {
     textured = 0;
   const failures = [];
 
+  const infrastructure = manifest.tiles.filter((tile) => tile.kind !== 'building');
+  function countTile() {
+    if (++done % 24 === 0 || done === manifest.tiles.length) progress(done, manifest.tiles.length);
+  }
+  const city = cityBuildings(catalog, anisotropy, (faces) => {
+    triangles += faces;
+    textured++;
+    countTile();
+  }).then((group) => buildings.add(group));
+
   async function worker() {
-    while (next < manifest.tiles.length) {
-      const tile = manifest.tiles[next++];
+    while (next < infrastructure.length) {
+      const tile = infrastructure[next++];
       try {
         let group = streetTrees.get(tile.id);
         if (!group) {
-          const bytes = archives[tile.archive].slice(tile.offset, tile.offset + tile.length);
+          const [archive, offset, length] = catalog.infrastructure.tiles[tile.id];
+          const bytes = archives[archive].slice(offset, offset + length);
           group = (await loader.parseAsync(bytes, '')).scene;
           frame.place(group, tile.center);
         }
-        const isBuilding = tile.kind === 'building';
         let mapped = false;
         group.traverse((object) => {
           if (!object.isMesh) return;
-          object.castShadow = ['building', 'tree', 'bridge', 'furniture'].includes(tile.kind);
+          object.castShadow = ['tree', 'bridge', 'furniture'].includes(tile.kind);
           object.receiveShadow = tile.kind !== 'water';
-          if (isBuilding) {
-            object.layers.enable(1);
-            if (replacements.has(tile.id)) {
-              replacedFaces += removeLandmarks(object.geometry, replacements.get(tile.id));
-            }
-            const original = object.material;
+          const conventional = { road: roads, grass, water, tree: leafMesh }[tile.kind];
+          const original = object.material;
+          const isInfrastructure = tile.kind === 'bridge' || tile.kind === 'furniture';
+          if (
+            isInfrastructure ||
+            (tile.kind !== 'road' &&
+              tile.kind !== 'water' &&
+              (original.map || original.vertexColors))
+          ) {
+            const kind = isInfrastructure ? tile.kind : tile.kind === 'grass' ? 'grass' : 'leaf';
+            const material = surfaceMaterial(kind, original.map);
             if (original.map) {
+              material.color.set('#f3efe5');
               original.map.anisotropy = Math.min(anisotropy, 8);
-              const material = surfaceMaterial('building', original.map);
-              material.color.set('#f7f1e7');
-              material.roughness = Math.max(0.53, original.roughness ?? 0.82);
-              material.metalness = Math.min(0.12, original.metalness ?? 0);
-              if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
-              object.material = material;
               mapped = true;
-            } else {
-              if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
-              object.material = clay;
+            } else if (original.vertexColors || original.color?.getHex() !== 0xffffff) {
+              material.color.copy(original.color);
             }
+            material.vertexColors = original.vertexColors;
+            object.material = material;
           } else {
-            const conventional = { road: roads, grass, water, tree: leafMesh }[tile.kind];
-            const original = object.material;
-            const isInfrastructure = tile.kind === 'bridge' || tile.kind === 'furniture';
-            if (
-              isInfrastructure ||
-              (tile.kind !== 'road' &&
-                tile.kind !== 'water' &&
-                (original.map || original.vertexColors))
-            ) {
-              const kind = isInfrastructure ? tile.kind : tile.kind === 'grass' ? 'grass' : 'leaf';
-              const material = surfaceMaterial(kind, original.map);
-              if (original.map) {
-                material.color.set('#f3efe5');
-                original.map.anisotropy = Math.min(anisotropy, 8);
-                mapped = true;
-              } else if (original.vertexColors || original.color?.getHex() !== 0xffffff) {
-                material.color.copy(original.color);
-              }
-              material.vertexColors = original.vertexColors;
-              object.material = material;
-            } else {
-              object.material = conventional;
-            }
-            if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
-            if (tile.id in streetTiles) applyStreetSurface(object, tile, streetMaterials);
-            if (tile.id in deckTiles) applyDeckSurface(object, tile, deckMaterial);
-            if (tile.id === hedgeTile) applyHedgeSurface(object, hedgeLeaves);
+            object.material = conventional;
           }
+          if (!object.geometry.hasAttribute('normal')) object.geometry.computeVertexNormals();
+          if (tile.id in streetTiles) applyStreetSurface(object, tile, streetMaterials);
+          if (tile.id in deckTiles) applyDeckSurface(object, tile, deckMaterial);
+          if (tile.id === hedgeTile) applyHedgeSurface(object, hedgeLeaves);
           triangles +=
             (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3;
         });
         textured += Number(mapped);
         if (tile.kind === 'water') group.position.y += 0.7;
         if (tile.kind === 'road') group.position.y += roadLift;
-        (isBuilding ? buildings : root).add(group);
+        root.add(group);
       } catch (error) {
         failures.push(tile.id);
         console.error(tile.id, error);
       }
-      if (++done % 24 === 0 || done === manifest.tiles.length)
-        progress(done, manifest.tiles.length);
+      countTile();
     }
   }
   const [trees, tracks] = await Promise.all([
     park,
     rail,
     rooftop,
+    city,
     ...Array.from({ length: 12 }, worker),
   ]);
   draco.dispose();
-  if (replacedFaces !== landmarkFaces)
-    throw new Error('大丸有の個別モデルと元の建物面が一致しません');
   if (failures.length) throw new Error(`${failures.length}件の都市タイルを読み込めませんでした`);
   root.updateMatrixWorld(true);
   root.traverse((object) => {
@@ -500,8 +475,9 @@ export async function loadCity(progress, anisotropy) {
     counts: {
       tiles: done,
       textured,
-      triangles: triangles + landmarkFaces,
-      landmarks: landmarks.children.length,
+      triangles,
+      buildingCount: catalog.count,
+      landmarks: catalog.landmarks,
       trees: trees.count,
       surveyedTrees: manifest.surveyedTrees.length,
       tracks,

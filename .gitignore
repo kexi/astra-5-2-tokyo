@@ -13,5 +13,7 @@ output/*.blend
 !output/omy-architecture.blend
 output/*.blend[0-9]*
 output/.flight-timeline.json
+output/building-paint/
+output/building-turntables.zip
 review/detail-round-*/
 review/open-round-*/

@@ -301,3 +301,33 @@ input[type='range'] {
     top: 20px;
   }
 }
+
+#city-search {
+  color: inherit;
+  background: #202a30;
+  border: 1px solid #849094;
+  border-radius: 0.3rem;
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  max-width: 100%;
+}
+#city-find {
+  flex-wrap: wrap;
+}
+
+.city-help {
+  display: flex;
+  gap: 0.25rem 1rem;
+  justify-content: end;
+  flex-wrap: wrap;
+}
+.city-help details {
+  max-width: 31rem;
+}
+.city-help summary {
+  cursor: pointer;
+  color: #ffdfa3;
+}
+.city-help details p {
+  margin-block: 0.5rem;
+}
