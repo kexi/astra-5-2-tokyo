@@ -46,3 +46,7 @@ build-blender:
 build-blender-mcp:
     node tools/export-flight.mjs output/.flight-timeline.json
     uv run tools/build-with-blender-mcp.py
+
+# 全棟版を開き直し、分割前のシーンとPLATEAUの原典を棟単位で照合する
+audit-buildings baseline model="output/tokyo-station.blend":
+    "{{ env_var_or_default("BLENDER_BIN", "/Applications/Blender.app/Contents/MacOS/Blender") }}" --background "{{ model }}" --python-exit-code 1 --python tools/audit-blender-buildings.py -- --baseline "{{ baseline }}"

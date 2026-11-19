@@ -40,6 +40,10 @@ uv run --script tools/audit-building-textures.py
 uv run --script tools/audit-building-textures.py --building 東京駅
 uv run --script tools/audit-building-textures.py --building 13101-bldg-471
 uv run --script tools/audit-building-textures.py --csv /tmp/building-textures.csv
+uv run --script tools/audit-building-textures.py --batch-index /tmp/building-batches.json.gz
+cmp /tmp/building-batches.json.gz tools/building-batches.json.gz
 ```
 
-初回で元b3dmのキャッシュがなければ `--fetch-missing` を付けると、配布マニフェストに記録された公式URLから不足タイルを取得する。別の場所に保管したキャッシュは `--cache` で指定できる。Blenderの再読込で `_BATCHID` を直接確認できなかった6件も配信用GLBでは判定できた。この6件のBlender上の面対応は未確認。
+初回で元b3dmのキャッシュがなければ `--fetch-missing` を付けると、配布マニフェストに記録された公式URLから不足タイルを取得する。別の場所に保管したキャッシュは `--cache` で指定できる。`--batch-index` は原典b3dm内のGLBも復号し、元タイル内の地物番号と監査CSVの行の対応を保存する。全410タイルで、元のデータと配信用GLBの写真付き・写真なし三角形数が23,115棟それぞれで一致した。
+
+中央区の6タイルは地物番号が16ビット整数で格納されており、Blender 5.2.2の標準インポートでは番号が失われた。全棟版の制作では同じDracoデータから32ビット浮動小数点数として正確に読み出し、各三角形の3頂点が同一の地物番号を持つことを照合してから棟を分ける。[Blenderでの棟別分離](../tools/blender_buildings.py)

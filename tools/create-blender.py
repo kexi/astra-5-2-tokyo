@@ -298,6 +298,7 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
     basic_tree, graph, surface = new_surface(
         "PLATEAU樹木・樹冠", (0.08, 0.15, 0.043), 0.76
     )
+    from blender_buildings import importable_building_glb
     from blender_expressway import apply_deck_surface, deck_settings
     from blender_glass import enhance_building_material
     from blender_hedges import HEDGE_TILE, apply_hedge_surface
@@ -321,7 +322,10 @@ def import_city(manifest, tile_matrix, photo, project, subset, overlays):
                     added += 1
                     continue
                 start = tile["offset"]
-                temp.write_bytes(archive[start : start + tile["length"]])
+                glb = archive[start : start + tile["length"]]
+                temp.write_bytes(
+                    importable_building_glb(glb) if kind == "building" else glb
+                )
                 previous = set(bpy.context.scene.objects)
                 bpy.ops.import_scene.gltf(
                     filepath=str(temp),
@@ -702,6 +706,11 @@ def main(argv=None, *, empty_scene=False):
             credits,
             params.output.with_name("omy-architecture.blend"),
         )
+    from blender_buildings import separate_buildings
+
+    separate_buildings(
+        scene.collection.children[TILE_COLLECTIONS["building"]], landmarks
+    )
     bpy.ops.wm.save_as_mainfile(filepath=str(params.output), compress=True)
     if params.preview:
         scene.render.filepath = str(params.preview)

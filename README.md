@@ -3,7 +3,8 @@
 PLATEAUの2025年度3D都市モデルを使い、東京駅・丸の内・八重洲をThree.jsで再現した空撮作品です。
 
 - [GitHub Pagesで3Dモデルを見る](https://kexi.github.io/astra-5-2-tokyo/)
-- [空撮動画（MP4）](output/tokyo-station.mp4)
+- [空撮動画（MP4）](https://kexi.github.io/astra-5-2-tokyo/output/tokyo-station.mp4)
+- [全23,115棟のBlenderファイル（350 MiB）](https://github.com/kexi/astra-5-2-tokyo/releases/download/tokyo-station-buildings-v1/tokyo-station.blend)
 - [360°レビュー](review/README.md)
 - [建物23,115件のLODと画像テクスチャ](review/building-textures.md)
 - [大丸有22棟の外装を棟別に見る](https://kexi.github.io/astra-5-2-tokyo/?model=buildings) ・ [東京駅周辺地下街の断面を見る](https://kexi.github.io/astra-5-2-tokyo/?model=underground)
@@ -29,11 +30,13 @@ Webコードは `just format-web` で整形し、`just check-web` でOxfmtとOxl
 
 ## Blenderで編集する
 
-Blender 5.2で `just build-blender` を実行すると、都市全体の `output/tokyo-station.blend` と、大丸有の建物・地下街を抜き出した `output/omy-architecture.blend` が生成されます。Blenderの場所は `BLENDER_BIN` で指定できます。写真テクスチャはプロジェクトに同梱され、建物・道路・水域・樹木・橋梁・街路設備・軌道をコレクション別に編集できます。都市全体のタイムラインには空撮8カットのカメラとマーカーがあります。
+都市全体の `output/tokyo-station.blend` では、収録したPLATEAU建物23,115棟をそれぞれ選択し、編集モードで頂点や面を編集できます。建物はアウトライナーで千代田区・中央区・港区に分かれ、各区の下に元のタイルがあります。各棟のカスタムプロパティには建物ID（`id`）、地物ID（`gml`）、実際のLOD、写真のある面数が入っています。外壁写真はファイルに埋め込みました。道路・水域・樹木・橋梁・街路設備・軌道は別コレクションにあり、タイムラインには空撮8カットのカメラとマーカーがあります。
+
+Web版は同じ都市形状をタイル単位で読み込み、外装を個別に仕上げた大丸有22棟を専用のGLBから表示します。Blenderの全棟版には写真のある22,620棟と、形状と材質で表現したLOD1の495棟が含まれます。各棟の写真の範囲は[建物ID別の集計](review/building-textures.md)で確認できます。
 
 三菱地所設計の公開事例図に載る22物件の主棟を公開PLATEAU形状と照合し、建物ごとに独立したメッシュと編集用の外装写真アトラスを作成しました。丸の内二丁目ビルの屋上と上層外壁には、東京都の航空レーザ点群や同一建物の画像から再構成した設備と窓を追加しています。地下街は国交省の2023年度実証で公開されたLOD4.0の地物を取り込みました。床と壁は元データの形状に合わせ、推定仕上げのPBRテクスチャを貼っています。[データ出典・加工範囲と利用条件](assets/OMY-SOURCES.md)
 
-Blender LabのMCP拡張と `blender-mcp` がインストールされている環境では、`just build-blender-mcp` で同じ成果物をMCP経由で生成できます。作品専用のバックグラウンドプロセスを起動し、ローカルで作成・保存して終了します。
+Blender 5.2にBlender LabのMCP拡張と `blender-mcp` を導入し、`just build-blender-mcp` を実行すると、都市全体と大丸有22棟・地下街の `output/omy-architecture.blend` を再生成できます。作品専用のバックグラウンドプロセスを起動し、MCP経由で作成・保存して終了します。`just build-blender` では同じ制作スクリプトを直接実行できます。Blenderの場所は `BLENDER_BIN` で指定できます。
 
 データ取得とMCPクライアントは、各スクリプトのPEP 723メタデータを使って `uv run` で起動します。Blender内で動く制作スクリプトは同梱のPython 3.13、`bpy`、NumPyを使用します。Python全体のリントと整形は `just check-python` で検査できます。
 
